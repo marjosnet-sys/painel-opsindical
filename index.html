@@ -107,6 +107,19 @@
             border-color: #732d91;
             box-shadow: 0 4px 10px rgba(142, 68, 173, 0.4);
         }
+/* Ajuste responsivo para o logo no celular */
+        @media (max-width: 768px) {
+            .chart-container {
+                padding-top: 75px !important; /* Abre espaço no topo do quadro branco */
+            }
+            .chart-container img {
+                top: 15px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important; /* Centraliza o logo no topo do quadro */
+                height: 45px !important; /* Reduz um pouco a altura para otimizar espaço */
+            }
+        }
+        
     </style>
 </head>
 <body>
