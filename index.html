@@ -3,448 +3,577 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Interativo: Orçamento vs Política Salarial TJSP</title>
+    <title>Painel Executivo TJSP: Orçamento, Salários e Efetivo</title>
     
-    <!-- Importando a biblioteca Chart.js via CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #8da9c4;
+            --accent-red: #d9534f;
+            --accent-green: #00a884;
+            --accent-purple: #8e44ad;
+            --bg-body: #f4f7f6;
+            --bg-card: #ffffff;
+            --text-dark: #333;
+            --text-muted: #7f8c8d;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
-            color: #333;
+            background-color: var(--bg-body);
+            color: var(--text-dark);
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 40px 20px;
+            padding: 30px 20px;
             margin: 0;
         }
 
         .dashboard {
             width: 100%;
-            max-width: 1050px;
+            max-width: 1100px;
             display: flex;
             flex-direction: column;
-            gap: 25px;
+            gap: 20px;
         }
 
-        .chart-container {
-            background-color: #ffffff;
-            padding: 25px 30px;
+        .controls-wrapper {
+            background-color: var(--bg-card);
             border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+            overflow: hidden;
             position: relative;
         }
 
-        .header-controls {
-            text-align: center;
-            margin-bottom: 25px;
+        .logo-container {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            z-index: 10;
         }
 
-        h2 {
-            margin: 0 0 20px 0;
-            color: #2c3e50;
-            font-size: 22px;
-            transition: color 0.3s ease;
-        }
-        
-        h3 {
-            margin: 0 0 15px 0;
-            color: #34495e;
-            font-size: 18px;
-            text-align: center;
+        .logo-container img {
+            height: 50px;
         }
 
-        .button-group {
+        .main-menu {
+            display: flex;
+            justify-content: center;
+            background-color: #eef2f5;
+            border-bottom: 2px solid #e0e6ed;
+            padding-top: 15px;
+            padding-left: 100px; 
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 15px 20px;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn:hover {
+            color: var(--primary);
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+            background-color: var(--bg-card);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .sub-menu {
             display: flex;
             justify-content: center;
             flex-wrap: wrap;
             gap: 12px;
+            padding: 20px;
+            background-color: var(--bg-card);
+            min-height: 40px;
         }
 
-        button {
+        .sub-btn {
             background-color: #e0e6ed;
             color: #555;
             border: 2px solid transparent;
-            padding: 10px 22px;
-            font-size: 15px;
+            padding: 8px 18px;
+            font-size: 14px;
             font-weight: 600;
             border-radius: 30px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
 
-        button:hover {
-            background-color: #cbd4db;
+        .sub-btn:hover { background-color: #cbd4db; }
+        .sub-btn.active { box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+
+        .sub-btn.active[data-color="nominal"] { background-color: var(--secondary); color: white; border-color: #5a7d9a; }
+        .sub-btn.active[data-color="real"] { background-color: var(--accent-red); color: white; border-color: #b52b27; }
+        .sub-btn.active[data-color="ranking"] { background-color: var(--primary); color: white; border-color: #1a252f; }
+        .sub-btn.active[data-color="saldo"] { background-color: var(--accent-purple); color: white; border-color: #732d91; }
+        .sub-btn.active[data-color="servidores"] { background-color: var(--accent-green); color: white; border-color: #007a60; }
+        .sub-btn.active[data-color="bonus"] { background-color: #e67e22; color: white; border-color: #d35400; }
+
+        .chart-box {
+            background-color: var(--bg-card);
+            padding: 25px 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            box-sizing: border-box;
+            transition: opacity 0.3s ease;
         }
 
-        /* Cores ativas para cada botão */
-        button.active-nominal {
-            background-color: #8da9c4;
-            color: white;
-            border-color: #5a7d9a;
-            box-shadow: 0 4px 10px rgba(141, 169, 196, 0.4);
+        .chart-box.large {
+            height: 65vh;
         }
 
-        button.active-real {
-            background-color: #d9534f;
-            color: white;
-            border-color: #b52b27;
-            box-shadow: 0 4px 10px rgba(217, 83, 79, 0.4);
+        .chart-title {
+            margin: 0 0 15px 0;
+            font-size: 20px;
+            font-weight: 700;
+            text-align: center;
+            transition: color 0.3s ease;
         }
 
-        button.active-ranking {
-            background-color: #2c3e50;
-            color: white;
-            border-color: #1a252f;
-            box-shadow: 0 4px 10px rgba(44, 62, 80, 0.4);
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 40vh;
+            min-height: 300px;
         }
         
-        /* Nova cor para o botão de Saldo */
-        button.active-saldo {
-            background-color: #8e44ad;
-            color: white;
-            border-color: #732d91;
-            box-shadow: 0 4px 10px rgba(142, 68, 173, 0.4);
+        .large .canvas-container {
+            height: 100%;
         }
-/* Ajuste responsivo para o logo no celular */
+
+        .hidden { display: none !important; }
+
         @media (max-width: 768px) {
-            .chart-container {
-                padding-top: 75px !important; /* Abre espaço no topo do quadro branco */
-            }
-            .chart-container img {
-                top: 15px !important;
-                left: 50% !important;
-                transform: translateX(-50%) !important; /* Centraliza o logo no topo do quadro */
-                height: 45px !important; /* Reduz um pouco a altura para otimizar espaço */
-            }
+            .main-menu { padding-left: 0; padding-top: 60px; }
+            .logo-container { top: 10px; left: 50%; transform: translateX(-50%); }
+            .canvas-container { height: 35vh; }
         }
-        
     </style>
 </head>
 <body>
 
     <div class="dashboard">
-        <!-- Gráfico Superior (Orçamento) -->
-        <div class="chart-container">
-
-            <!-- LOGO DO COLETIVO NO CANTO DO QUADRO -->
-            <img src="logo.png" alt="Logo do Coletivo" style="position: absolute; top: 15px; left: 20px; height: 65px; z-index: 10;">
-
-            <div class="header-controls">
-                <h2 id="chartTitle">Orçamento TJSP: Valores Nominais</h2>
-                <div class="button-group">
-                    <button id="btnNominal" class="active-nominal">1. Nominal</button>
-                    <button id="btnReal">2. C. Monetária</button>
-                    <button id="btnRanking">3. Rank. Orçamento</button>
-                    <button id="btnSaldo">4. Rank. Reposição</button>
-                </div>
+        <div class="controls-wrapper">
+            <div class="logo-container">
+                <img src="logo.png" alt="Logo">
             </div>
-            <canvas id="orcamentoChart" height="100"></canvas>
+            
+            <div class="main-menu" id="mainMenu">
+                <button class="tab-btn active" data-tab="menu1">1. Orçamento</button>
+                <button class="tab-btn" data-tab="menu2">2. Orç. x Salário</button>
+                <button class="tab-btn" data-tab="menu3">3. Efetivo</button>
+                <button class="tab-btn" data-tab="menu4">4. Raio-X 3D</button>
+            </div>
+
+            <div class="sub-menu" id="subMenu1">
+                <button class="sub-btn active" data-action="m1_nominal" data-color="nominal">Nominal</button>
+                <button class="sub-btn" data-action="m1_real" data-color="real">Real</button>
+            </div>
+
+            <div class="sub-menu hidden" id="subMenu2">
+                <button class="sub-btn active" data-action="m2_crono" data-color="real">Cronológica</button>
+                <button class="sub-btn" data-action="m2_rank_orc" data-color="ranking">Rank Orçamento</button>
+                <button class="sub-btn" data-action="m2_rank_saldo" data-color="saldo">Rank Saldo</button>
+            </div>
+
+            <div class="sub-menu hidden" id="subMenu3">
+                <button class="sub-btn active" data-action="m3_orc" data-color="real">vs Orçamento</button>
+                <button class="sub-btn" data-action="m3_saldo" data-color="saldo">vs Saldo</button>
+            </div>
+
+            <div class="sub-menu hidden" id="subMenu4">
+                <button class="sub-btn active" data-action="m4_bubble" data-color="bonus">Ativar Bolhas</button>
+            </div>
         </div>
 
-        <!-- Gráfico Inferior (Inflação x Reposição) -->
-        <div class="chart-container">
+        <div class="chart-box" id="topChartBox">
+            <h2 class="chart-title" id="topChartTitle">Título Superior</h2>
+            <div class="canvas-container">
+                <canvas id="topCanvas"></canvas>
+            </div>
+        </div>
 
-            <!-- LOGO DO COLETIVO NO CANTO DO QUADRO -->
-            <img src="logo.png" alt="Logo do Coletivo" style="position: absolute; top: 15px; left: 20px; height: 65px; z-index: 10;">
-
-            <h3>Política Salarial: Inflação vs Reposição (Acompanhando o eixo superior)</h3>
-            <canvas id="salarialChart" height="80"></canvas>
+        <div class="chart-box hidden" id="bottomChartBox">
+            <h2 class="chart-title" id="bottomChartTitle">Título Inferior</h2>
+            <div class="canvas-container">
+                <canvas id="bottomCanvas"></canvas>
+            </div>
         </div>
     </div>
 
     <script>
-        // 1. Dados Base Conjuntos (2015 a 2026)
-        const anosCronologicos = ['2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025', '2026'];
-        
-        // Criando a matriz com a palavra GREVE acoplada
-        const labelsSalarialCronologico = anosCronologicos.map(ano => ano === '2025' ? ['2025', 'GREVE'] : ano);
-        
-        // Dados do Orçamento
-        const valoresNominais = [10.01, 10.97, 11.42, 11.65, 12.23, 12.53, 12.54, 13.18, 15.25, 15.44, 17.23, 19.30];
-        const valoresReais = [17.63, 17.34, 17.25, 17.35, 17.49, 17.29, 16.31, 15.56, 17.08, 16.68, 17.81, 19.30];
-        
-        // Dados Salariais
-        const inflacaoCronologica = [7.68, 11.08, 4.69, 1.81, 3.94, 3.92, 6.22, 10.80, 5.47, 3.86, 4.87, 3.36];
-        const reposicaoCronologica = [7.68, 7.08, 5.20, 1.81, 3.94, 0.00, 0.00, 10.00, 6.00, 4.00, 7.63, 4.25];
+        const rawData = [
+            { ano: '2015', nominal: 10.01, real: 17.63, inf: 7.68, rep: 7.68, serv: 43000 },
+            { ano: '2016', nominal: 10.97, real: 17.34, inf: 11.08, rep: 7.08, serv: 43200 },
+            { ano: '2017', nominal: 11.42, real: 17.25, inf: 4.69, rep: 5.20, serv: 42900 },
+            { ano: '2018', nominal: 11.65, real: 17.35, inf: 1.81, rep: 1.81, serv: 42200 },
+            { ano: '2019', nominal: 12.23, real: 17.49, inf: 3.94, rep: 3.94, serv: 40450 },
+            { ano: '2020', nominal: 12.53, real: 17.29, inf: 3.92, rep: 0.00, serv: 38750 },
+            { ano: '2021', nominal: 12.54, real: 16.31, inf: 6.22, rep: 0.00, serv: 38120 },
+            { ano: '2022', nominal: 13.18, real: 15.56, inf: 10.80, rep: 10.00, serv: 38650 },
+            { ano: '2023', nominal: 15.25, real: 17.08, inf: 5.47, rep: 6.00, serv: 39850 },
+            { ano: '2024', nominal: 15.44, real: 16.68, inf: 3.86, rep: 4.00, serv: 40850 },
+            { ano: '2025', nominal: 17.23, real: 17.81, inf: 4.87, rep: 7.63, serv: 41250 },
+            { ano: '2026', nominal: 19.30, real: 19.30, inf: 3.36, rep: 4.25, serv: 40900 }
+        ];
 
-        // 2. Preparando os dados espelhados para o Ranking de Orçamento Real
-        let dadosParaOrdenar = anosCronologicos.map((ano, index) => {
-            return { 
-                ano: ano, 
-                valorReal: valoresReais[index],
-                inflacao: inflacaoCronologica[index],
-                reposicao: reposicaoCronologica[index]
-            };
-        });
-        
-        // Ordena do MAIOR para o MENOR orçamento real (Decrescente)
-        dadosParaOrdenar.sort((a, b) => b.valorReal - a.valorReal);
-        
-        const anosRanking = dadosParaOrdenar.map(item => item.ano);
-        const labelsSalarialRanking = anosRanking.map(ano => ano === '2025' ? ['2025', 'GREVE'] : ano);
-        const valoresRanking = dadosParaOrdenar.map(item => item.valorReal);
-        const inflacaoRanking = dadosParaOrdenar.map(item => item.inflacao);
-        const reposicaoRanking = dadosParaOrdenar.map(item => item.reposicao);
+        const baseData = rawData.map(d => ({
+            ...d,
+            saldo: parseFloat((d.rep - d.inf).toFixed(2)),
+            labelBase: d.ano === '2025' ? ['2025', 'GREVE'] : [d.ano]
+        }));
 
-        // Cores do Ranking de Orçamento
-        const coresRanking = valoresRanking.map((valor, index) => {
-            if (index === 0) return '#2ca02c'; 
-            if (index === valoresRanking.length - 1) return '#d9534f'; 
-            return '#4a81ba'; 
+        const dataCrono = [...baseData];
+        const dataRankOrc = [...baseData].sort((a, b) => b.real - a.real);
+        const dataRankSaldo = [...baseData].sort((a, b) => {
+            if (b.saldo !== a.saldo) return b.saldo - a.saldo;
+            return b.inf - a.inf;
         });
 
-        // 2.5 Preparando os dados espelhados para o Ranking de SALDO SALARIAL
-        let dadosParaOrdenarSaldo = anosCronologicos.map((ano, index) => {
-            return { 
-                ano: ano, 
-                valorReal: valoresReais[index], 
-                inflacao: inflacaoCronologica[index],
-                reposicao: reposicaoCronologica[index],
-                saldo: reposicaoCronologica[index] - inflacaoCronologica[index] 
-            };
-        });
+        const mapRankOrc = {}; dataRankOrc.forEach((d, i) => mapRankOrc[d.ano] = (i+1)+'ª');
+        const mapRankSaldo = {}; dataRankSaldo.forEach((d, i) => mapRankSaldo[d.ano] = (i+1)+'ª');
 
-        // Ordena com CRITÉRIO DE DESEMPATE
-        dadosParaOrdenarSaldo.sort((a, b) => {
-            if (b.saldo !== a.saldo) {
-                return b.saldo - a.saldo; // Prioridade 1: Maior Saldo
-            } else {
-                return b.inflacao - a.inflacao; // Prioridade 2 (Desempate): Maior Inflação Bruta
-            }
-        });
+        let chartTopInstance = null;
+        let chartBottomInstance = null;
+        
+        const ctxTop = document.getElementById('topCanvas').getContext('2d');
+        const ctxBottom = document.getElementById('bottomCanvas').getContext('2d');
 
-        const anosSaldo = dadosParaOrdenarSaldo.map(item => item.ano);
-        const labelsSalarialSaldo = anosSaldo.map(ano => ano === '2025' ? ['2025', 'GREVE'] : ano);
-        const valoresReaisSaldo = dadosParaOrdenarSaldo.map(item => item.valorReal);
-        const inflacaoSaldo = dadosParaOrdenarSaldo.map(item => item.inflacao);
-        const reposicaoSaldo = dadosParaOrdenarSaldo.map(item => item.reposicao);
+        function createBudgetConfig(dataset, type, mode = '') {
+            const labels = dataset.map(d => {
+                let lbl = [...d.labelBase];
+                if (mode.includes('rank')) lbl.push(mapRankOrc[d.ano]);
+                return lbl;
+            });
+            const dataVals = dataset.map(d => d[type]);
+            
+            const bgColor = dataset.map((d, i) => {
+                if (mode === 'rank_orc') {
+                    if (i === 0) return '#2ca02c'; 
+                    if (i === dataset.length - 1) return '#d9534f'; 
+                    return '#4a81ba'; 
+                }
+                if (mode === 'rank_saldo') {
+                    return '#9b59b6'; 
+                }
+                return type === 'nominal' ? '#8da9c4' : '#d9534f'; 
+            });
 
-        // 3. Inicializando Gráfico Superior (Orçamento)
-        const ctxOrcamento = document.getElementById('orcamentoChart').getContext('2d');
-        let orcamentoChart = new Chart(ctxOrcamento, {
-            type: 'bar',
-            data: {
-                labels: [...anosCronologicos],
-                datasets: [{
-                    label: 'Orçamento Nominal (R$ Bilhões)',
-                    data: valoresNominais,
-                    backgroundColor: '#8da9c4',
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        padding: 12,
-                        titleFont: { size: 14 },
-                        bodyFont: { size: 16, weight: 'bold' },
-                        callbacks: {
-                            label: function(context) { return ' R$ ' + context.parsed.y.toFixed(2).replace('.', ',') + ' Bilhões'; }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        suggestedMax: 21,
-                        title: { display: true, text: 'Bilhões (R$)', font: { weight: 'bold' } },
-                        ticks: { callback: function(value) { return 'R$ ' + value; } }
-                    },
-                    x: {
-                        ticks: { font: { weight: 'bold' } }
-                    }
-                },
-                animation: { duration: 1000, easing: 'easeOutQuart' }
-            }
-        });
-
-        // 4. Inicializando Gráfico Inferior (Inflação x Reposição)
-        const ctxSalarial = document.getElementById('salarialChart').getContext('2d');
-        let salarialChart = new Chart(ctxSalarial, {
-            type: 'bar',
-            data: {
-                labels: [...labelsSalarialCronologico], 
-                datasets: [
-                    {
-                        label: 'Inflação', 
-                        data: inflacaoCronologica,
-                        backgroundColor: 'rgba(243, 156, 18, 0.2)', 
-                        borderColor: '#e67e22',
-                        borderWidth: 2,
-                        grouped: false, 
-                        categoryPercentage: 0.8,
-                        barPercentage: 0.9, 
-                        borderRadius: 3
-                    },
-                    {
-                        label: 'Reposição', 
-                        data: reposicaoCronologica,
-                        backgroundColor: 'rgba(41, 128, 255, 1)', 
-                        borderColor: '#2471a3',
-                        borderWidth: 1,
-                        grouped: false, 
-                        categoryPercentage: 0.8,
-                        barPercentage: 0.45, 
-                        borderRadius: 3
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                interaction: {
-                    mode: 'index',
-                    intersect: false,
-                },
-                plugins: {
-                    legend: { display: true, position: 'top' },
-                    tooltip: {
-                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                        titleColor: '#333',
-                        bodyColor: '#333',
-                        borderColor: '#ccc',
-                        borderWidth: 1,
-                        padding: 12,
-                        titleFont: { size: 14 },
-                        bodyFont: { size: 14, weight: 'bold' },
-                        callbacks: {
-                            title: function(context) { 
-                                let title = context[0].label;
-                                if (Array.isArray(title)) return title[0];
-                                if (typeof title === 'string' && title.includes(',')) return title.split(',')[0];
-                                return title;
-                            },
-                            label: function(context) { return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + '%'; },
-                            afterBody: function(context) {
-                                let inflacao = 0;
-                                let reposicao = 0;
-                                context.forEach(item => {
-                                    if (item.dataset.label === 'Inflação') inflacao = item.parsed.y;
-                                    if (item.dataset.label === 'Reposição') reposicao = item.parsed.y;
-                                });
-                                let saldo = (reposicao - inflacao).toFixed(2);
-                                let sinal = saldo > 0 ? '+' : '';
-                                return '\nSaldo: ' + sinal + saldo + '%'; // Texto alterado aqui
+            return {
+                type: 'bar',
+                data: { labels: labels, datasets: [{ data: dataVals, backgroundColor: bgColor, borderRadius: 4 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)', padding: 12, titleFont: {size: 14}, bodyFont: {size: 16, weight: 'bold'},
+                            callbacks: {
+                                title: (ctx) => Array.isArray(ctx[0].label) ? ctx[0].label[0] : ctx[0].label,
+                                label: (ctx) => ' R$ ' + ctx.parsed.y.toFixed(2).replace('.', ',') + ' Bilhões'
                             }
                         }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        suggestedMax: 12,
-                        title: { display: true, text: 'Índice (%)', font: { weight: 'bold' } },
-                        ticks: { callback: function(value) { return value + '%'; } }
                     },
-                    x: {
-                        ticks: {
-                            font: function(context) {
-                                const textoReal = context.tick && context.tick.label;
-                                if (Array.isArray(textoReal) && textoReal[1] === 'GREVE') {
-                                    return [{ weight: 'bold' }, { weight: 'bold' }];
-                                }
-                                return { weight: 'bold' };
-                            },
-                            color: function(context) {
-                                const textoReal = context.tick && context.tick.label;
-                                if (Array.isArray(textoReal) && textoReal[1] === 'GREVE') {
-                                    return ['#333', '#d9534f'];
-                                }
-                                return '#333';
-                            }
-                        }
-                    }
-                },
-                animation: { duration: 1000, easing: 'easeOutQuart' }
-            }
-        });
-
-        // 5. Lógica de Interatividade Sincronizada
-        const btnNominal = document.getElementById('btnNominal');
-        const btnReal = document.getElementById('btnReal');
-        const btnRanking = document.getElementById('btnRanking');
-        const btnSaldo = document.getElementById('btnSaldo');
-        const chartTitle = document.getElementById('chartTitle');
-
-        function resetarBotoes() {
-            btnNominal.className = '';
-            btnReal.className = '';
-            btnRanking.className = '';
-            btnSaldo.className = '';
+                    scales: {
+                        y: { beginAtZero: true, min: 0, suggestedMax: 21, title: {display: true, text: 'Bilhões (R$)', font: {weight: 'bold'}}, ticks: {callback: v => 'R$ ' + v} },
+                        x: { ticks: { font: {weight: 'bold'}, color: ctx => ctx.tick.label && ctx.tick.label.includes('GREVE') ? ['#333', '#d9534f'] : '#333' } }
+                    },
+                    animation: { duration: 800, easing: 'easeOutQuart' }
+                }
+            };
         }
 
-        btnNominal.addEventListener('click', () => {
-            resetarBotoes();
-            btnNominal.classList.add('active-nominal');
-            chartTitle.textContent = 'Orçamento TJSP: Valores Nominais (Evolução Cronológica)';
-            chartTitle.style.color = '#2c3e50';
+        function createSalarialConfig(dataset, mode = '') {
+            const labels = dataset.map(d => {
+                let lbl = [...d.labelBase];
+                if (mode.includes('rank')) lbl.push(mapRankSaldo[d.ano]);
+                return lbl;
+            });
+            return {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { 
+                            label: 'Inflação', data: dataset.map(d=>d.inf), 
+                            backgroundColor: 'rgba(243, 156, 18, 0.2)', borderColor: '#e67e22', borderWidth: 2, 
+                            grouped: false, categoryPercentage: 0.8, barPercentage: 0.9, borderRadius: 3 
+                        },
+                        { 
+                            label: 'Reposição', data: dataset.map(d=>d.rep), 
+                            backgroundColor: 'rgba(41, 128, 255, 1)', borderColor: '#2471a3', borderWidth: 1, 
+                            grouped: false, categoryPercentage: 0.8, barPercentage: 0.45, borderRadius: 3 
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { display: true, position: 'top' },
+                        tooltip: {
+                            backgroundColor: 'rgba(255,255,255,0.95)', titleColor: '#333', bodyColor: '#333', borderColor: '#ccc', borderWidth: 1, padding: 12, titleFont: {size: 14}, bodyFont: {size: 14, weight: 'bold'},
+                            callbacks: {
+                                title: (ctx) => Array.isArray(ctx[0].label) ? ctx[0].label[0] : ctx[0].label,
+                                label: (ctx) => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(2) + '%',
+                                afterBody: (ctx) => {
+                                    let inf=0, rep=0;
+                                    ctx.forEach(i => { if(i.datasetIndex === 0) inf = i.parsed.y; else rep = i.parsed.y; });
+                                    let saldo = (rep - inf).toFixed(2);
+                                    return '\nSaldo: ' + (saldo > 0 ? '+' : '') + saldo + '%';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, min: 0, suggestedMax: 12, title: {display: true, text: 'Índice (%)', font: {weight: 'bold'}}, ticks: {callback: v => v + '%'} },
+                        x: { ticks: { font: {weight: 'bold'}, color: ctx => ctx.tick.label && ctx.tick.label.includes('GREVE') ? ['#333', '#d9534f'] : '#333' } }
+                    },
+                    animation: { duration: 800, easing: 'easeOutQuart' }
+                }
+            };
+        }
 
-            orcamentoChart.data.labels = [...anosCronologicos];
-            orcamentoChart.data.datasets[0].data = valoresNominais;
-            orcamentoChart.data.datasets[0].backgroundColor = Array(anosCronologicos.length).fill('#8da9c4');
-            orcamentoChart.update();
+        function createServidoresConfig(dataset) {
+            return {
+                type: 'line',
+                data: {
+                    labels: dataset.map(d => d.labelBase),
+                    datasets: [{
+                        label: 'Nº de Servidores Ativos', data: dataset.map(d=>d.serv),
+                        borderColor: '#00a884', backgroundColor: 'rgba(0, 168, 132, 0.15)',
+                        borderWidth: 3, fill: true, tension: 0.35, pointRadius: 5, pointHoverRadius: 8, pointBackgroundColor: '#00a884'
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 168, 132, 0.95)', titleColor: '#fff', bodyColor: '#fff', padding: 12, titleFont: {size: 14}, bodyFont: {size: 15, weight: 'bold'},
+                            callbacks: { label: (ctx) => ' Servidores Ativos: ' + ctx.parsed.y.toLocaleString('pt-BR') }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: false, min: 35000, max: 44000, 
+                            ticks: { stepSize: 1000, callback: v => v.toLocaleString('pt-BR') },
+                            title: {display: true, text: 'Nº de Servidores', font: {weight: 'bold'}}
+                        },
+                        x: { ticks: { font: {weight: 'bold'}, color: ctx => ctx.tick.label && ctx.tick.label.includes('GREVE') ? ['#333', '#d9534f'] : '#333' } }
+                    },
+                    animation: { duration: 800, easing: 'easeOutQuart' }
+                }
+            };
+        }
 
-            salarialChart.data.labels = [...labelsSalarialCronologico];
-            salarialChart.data.datasets[0].data = inflacaoCronologica;
-            salarialChart.data.datasets[1].data = reposicaoCronologica;
-            salarialChart.update();
+        function createBubbleConfig(dataset) {
+            const bubbleData = dataset.map(d => {
+                const r = Math.abs(d.saldo) * 4 + 4; 
+                return { x: d.real, y: d.serv, r: r, ano: d.ano, saldo: d.saldo };
+            });
+
+            const bgColors = bubbleData.map(d => {
+                if (d.saldo > 0) return 'rgba(46, 204, 113, 0.7)'; 
+                if (d.saldo === 0) return 'rgba(149, 165, 166, 0.7)'; 
+                return 'rgba(231, 76, 60, 0.7)'; 
+            });
+
+            const borderColors = bubbleData.map(d => {
+                if (d.saldo > 0) return '#27ae60';
+                if (d.saldo === 0) return '#7f8c8d';
+                return '#c0392b';
+            });
+
+            return {
+                type: 'bubble',
+                data: {
+                    datasets: [{
+                        label: 'Raio-X Anual',
+                        data: bubbleData,
+                        backgroundColor: bgColors,
+                        borderColor: borderColors,
+                        borderWidth: 2,
+                        hoverRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(44, 62, 80, 0.95)', titleColor: '#fff', bodyColor: '#fff', padding: 15, titleFont: {size: 16}, bodyFont: {size: 14},
+                            callbacks: {
+                                title: (ctx) => 'Ano Referência: ' + ctx[0].raw.ano,
+                                label: (ctx) => {
+                                    const d = ctx.raw;
+                                    const sinal = d.saldo > 0 ? '+' : '';
+                                    return [
+                                        `Orçamento Real: R$ ${d.x.toFixed(2).replace('.',',')} Bi`,
+                                        `Servidores Ativos: ${d.y.toLocaleString('pt-BR')}`,
+                                        `Saldo Salarial: ${sinal}${d.saldo}%`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            title: { display: true, text: '➔ Orçamento Real Corrigido (R$ Bilhões)', font: {weight: 'bold', size: 14} },
+                            min: 15, max: 20,
+                            ticks: { callback: v => 'R$ ' + v + ' Bi' }
+                        },
+                        y: { 
+                            title: { display: true, text: '➔ Quadro de Servidores Ativos (Nº)', font: {weight: 'bold', size: 14} },
+                            min: 37000, max: 44000,
+                            ticks: { stepSize: 1000, callback: v => v.toLocaleString('pt-BR') }
+                        }
+                    },
+                    animation: { duration: 1200, easing: 'easeOutBounce' }
+                }
+            };
+        }
+
+        function renderCharts(topConfig, topTitle, topColor, bottomConfig = null, bottomTitle = null, bottomColor = null, isSingleLarge = false) {
+            const topBox = document.getElementById('topChartBox');
+            
+            if (isSingleLarge) {
+                topBox.classList.add('large');
+            } else {
+                topBox.classList.remove('large');
+            }
+
+            const topTitleEl = document.getElementById('topChartTitle');
+            topTitleEl.textContent = topTitle;
+            topTitleEl.style.color = `var(--${topColor})`;
+            
+            if (chartTopInstance) {
+                chartTopInstance.config.type = topConfig.type;
+                chartTopInstance.data = topConfig.data;
+                chartTopInstance.options = topConfig.options;
+                chartTopInstance.update();
+            } else {
+                chartTopInstance = new Chart(ctxTop, topConfig);
+            }
+
+            const bottomBox = document.getElementById('bottomChartBox');
+            if (bottomConfig) {
+                bottomBox.classList.remove('hidden');
+                const bottomTitleEl = document.getElementById('bottomChartTitle');
+                bottomTitleEl.textContent = bottomTitle;
+                bottomTitleEl.style.color = `var(--${bottomColor})`;
+                
+                if (chartBottomInstance) {
+                    chartBottomInstance.config.type = bottomConfig.type;
+                    chartBottomInstance.data = bottomConfig.data;
+                    chartBottomInstance.options = bottomConfig.options;
+                    chartBottomInstance.update();
+                } else {
+                    chartBottomInstance = new Chart(ctxBottom, bottomConfig);
+                }
+            } else {
+                bottomBox.classList.add('hidden');
+            }
+        }
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                const targetTab = e.target.getAttribute('data-tab');
+                
+                document.querySelectorAll('.sub-menu').forEach(sm => sm.classList.add('hidden'));
+                
+                if (targetTab === 'menu1') {
+                    document.getElementById('subMenu1').classList.remove('hidden');
+                    document.querySelector('[data-action="m1_nominal"]').click(); 
+                } else if (targetTab === 'menu2') {
+                    document.getElementById('subMenu2').classList.remove('hidden');
+                    document.querySelector('[data-action="m2_crono"]').click();
+                } else if (targetTab === 'menu3') {
+                    document.getElementById('subMenu3').classList.remove('hidden');
+                    document.querySelector('[data-action="m3_orc"]').click();
+                } else if (targetTab === 'menu4') {
+                    document.getElementById('subMenu4').classList.remove('hidden');
+                    document.querySelector('[data-action="m4_bubble"]').click();
+                }
+            });
         });
 
-        btnReal.addEventListener('click', () => {
-            resetarBotoes();
-            btnReal.classList.add('active-real');
-            chartTitle.textContent = 'Orçamento TJSP: Valores Reais Corrigidos (Evolução Cronológica)';
-            chartTitle.style.color = '#d9534f';
+        document.querySelectorAll('.sub-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.target.parentElement.querySelectorAll('.sub-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                const action = e.target.getAttribute('data-action');
 
-            orcamentoChart.data.labels = [...anosCronologicos];
-            orcamentoChart.data.datasets[0].data = valoresReais;
-            orcamentoChart.data.datasets[0].backgroundColor = Array(anosCronologicos.length).fill('#d9534f');
-            orcamentoChart.update();
-
-            salarialChart.data.labels = [...labelsSalarialCronologico];
-            salarialChart.data.datasets[0].data = inflacaoCronologica;
-            salarialChart.data.datasets[1].data = reposicaoCronologica;
-            salarialChart.update();
+                switch(action) {
+                    case 'm1_nominal':
+                        renderCharts(createBudgetConfig(dataCrono, 'nominal', 'crono'), 'Orçamento TJSP: Valores Nominais (Evolução)', 'primary');
+                        break;
+                    case 'm1_real':
+                        renderCharts(createBudgetConfig(dataCrono, 'real', 'crono'), 'Orçamento TJSP: Valores Reais Corrigidos (Evolução)', 'accent-red');
+                        break;
+                    case 'm2_crono':
+                        renderCharts(
+                            createBudgetConfig(dataCrono, 'real', 'crono'), 'Orçamento Real: Ordem Cronológica', 'accent-red',
+                            createSalarialConfig(dataCrono, 'crono'), 'Política Salarial: Inflação vs Reposição', 'primary'
+                        );
+                        break;
+                    case 'm2_rank_orc':
+                        renderCharts(
+                            createBudgetConfig(dataRankOrc, 'real', 'rank_orc'), 'Ranking: Orçamento Real (Maior ao Menor)', 'primary',
+                            createSalarialConfig(dataRankOrc, 'rank_orc'), 'Política Salarial Acompanhando o Orçamento', 'text-dark'
+                        );
+                        break;
+                    case 'm2_rank_saldo':
+                        renderCharts(
+                            createSalarialConfig(dataRankSaldo, 'rank_saldo'), 'Ranking: Saldo Salarial (Maior Ganho ao Maior Arrocho)', 'accent-purple',
+                            createBudgetConfig(dataRankSaldo, 'real', 'rank_saldo'), 'Orçamento Real Acompanhando o Saldo Salarial', 'text-dark'
+                        );
+                        break;
+                    case 'm3_orc':
+                        renderCharts(
+                            createBudgetConfig(dataCrono, 'real', 'crono'), 'Orçamento Real (Ordem Cronológica)', 'accent-red',
+                            createServidoresConfig(dataCrono), 'Evolução do Efetivo TJSP', 'accent-green'
+                        );
+                        break;
+                    case 'm3_saldo':
+                        renderCharts(
+                            createSalarialConfig(dataCrono, 'crono'), 'Política Salarial (Ordem Cronológica)', 'primary',
+                            createServidoresConfig(dataCrono), 'Evolução do Efetivo TJSP', 'accent-green'
+                        );
+                        break;
+                    case 'm4_bubble':
+                        renderCharts(
+                            createBubbleConfig(dataCrono), 'Raio-X Integrado: Orçamento vs Servidores vs Saldo Salarial', 'text-dark',
+                            null, null, null, true
+                        );
+                        break;
+                }
+            });
         });
 
-        btnRanking.addEventListener('click', () => {
-            resetarBotoes();
-            btnRanking.classList.add('active-ranking');
-            chartTitle.textContent = 'Orçamento TJSP: Ranking de Orçamento (do Maior ao Menor)';
-            chartTitle.style.color = '#2c3e50';
+        document.querySelector('[data-action="m1_nominal"]').click();
 
-            orcamentoChart.data.labels = [...anosRanking];
-            orcamentoChart.data.datasets[0].data = valoresRanking;
-            orcamentoChart.data.datasets[0].backgroundColor = coresRanking;
-            orcamentoChart.update();
-
-            salarialChart.data.labels = [...labelsSalarialRanking];
-            salarialChart.data.datasets[0].data = inflacaoRanking;
-            salarialChart.data.datasets[1].data = reposicaoRanking;
-            salarialChart.update();
-        });
-        
-        // Ação 4: Visão Saldo Salarial
-        btnSaldo.addEventListener('click', () => {
-            resetarBotoes();
-            btnSaldo.classList.add('active-saldo');
-            chartTitle.textContent = 'Orçamento Real vs Saldo Salarial (Maior Ganho ao Maior Arrocho)';
-            chartTitle.style.color = '#8e44ad';
-
-            orcamentoChart.data.labels = [...anosSaldo];
-            orcamentoChart.data.datasets[0].data = valoresReaisSaldo;
-            orcamentoChart.data.datasets[0].backgroundColor = Array(anosCronologicos.length).fill('#9b59b6');
-            orcamentoChart.update();
-
-            salarialChart.data.labels = [...labelsSalarialSaldo];
-            salarialChart.data.datasets[0].data = inflacaoSaldo;
-            salarialChart.data.datasets[1].data = reposicaoSaldo;
-            salarialChart.update();
-        });
     </script>
 </body>
 </html>
