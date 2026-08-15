@@ -283,7 +283,7 @@
         <!-- ABA 0: SUMÁRIO EXECUTIVO (HOME) -->
         <div class="home-container" id="homeView">
             
-            <!-- Ranking do Estado (Movido para a esquerda) -->
+            <!-- Ranking do Estado (Esquerda) -->
             <div class="panel-card">
                 <h3 class="panel-title">Ranking Orçamentário Paulista (LOA)</h3>
                 <select class="select-year" id="yearSelector" onchange="renderRankingTable()">
@@ -317,7 +317,7 @@
                 <div class="total-budget" id="rankingTotal"></div>
             </div>
 
-            <!-- Tabela Comparativa (Movida para a direita) -->
+            <!-- Tabela Comparativa (Direita - Ordem Decrescente) -->
             <div class="panel-card">
                 <h3 class="panel-title">Evolução do Orçamento TJSP: LOA vs Execução</h3>
                 <table class="data-table">
@@ -419,7 +419,8 @@
             const tbody = document.getElementById('comparativeTableBody');
             tbody.innerHTML = '';
             
-            tjData.forEach(d => {
+            // Inverte a ordem do array para exibir do mais recente (2026) para o mais antigo (2015)
+            [...tjData].reverse().forEach(d => {
                 const diff = (d.execTable - d.loa).toFixed(2);
                 const isPositive = diff >= 0;
                 const diffClass = isPositive ? 'val-positive' : 'val-negative';
