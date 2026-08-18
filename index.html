@@ -51,18 +51,58 @@
             flex-direction: column;
         }
 
+        /* Cabeçalho Topo (Logo, Título e Chave Mestra) - Atualizado para Grid */
         .header-top {
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
             align-items: center;
             padding: 15px 25px;
             background-color: #f8fafc;
             border-bottom: 1px solid var(--border-color);
         }
 
-        .logo-container img { height: 45px; }
+        .logo-wrapper { 
+            display: flex; 
+            justify-content: flex-start; 
+        }
+        .logo-wrapper img { 
+            height: 75px; 
+            width: auto;
+        }
 
-        /* Chave Mestra Global */
+        /* Agrupamento do Título e Subtítulo */
+        .title-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .main-title {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 900;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .sub-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-top: 4px;
+        }
+
+        .toggle-wrapper {
+            display: flex;
+            justify-content: flex-end;
+        }
+
         .global-toggle {
             display: flex;
             background-color: #e2e8f0;
@@ -89,19 +129,17 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
 
-        /* Menu Principal (Abas) - Melhoria Mobile (Scroll Horizontal) */
+        /* Menu Principal (Abas) - Scroll Horizontal no Mobile */
         .main-menu {
             display: flex;
             background-color: #eef2f5;
             border-bottom: 2px solid var(--border-color);
             padding-top: 5px;
             overflow-x: auto; 
-            -webkit-overflow-scrolling: touch; /* Rolagem suave no iOS */
-            scrollbar-width: none; /* Oculta scrollbar Firefox */
+            -webkit-overflow-scrolling: touch; 
+            scrollbar-width: none; 
         }
-        .main-menu::-webkit-scrollbar { 
-            display: none; /* Oculta scrollbar Chrome/Safari/Edge */
-        }
+        .main-menu::-webkit-scrollbar { display: none; }
 
         .tab-btn {
             background: transparent;
@@ -113,7 +151,7 @@
             cursor: pointer;
             border-bottom: 3px solid transparent;
             transition: all 0.3s ease;
-            white-space: nowrap; /* Impede que o texto do botão quebre */
+            white-space: nowrap;
         }
 
         .tab-btn:hover { color: var(--primary); }
@@ -167,7 +205,7 @@
             border-radius: 12px;
             padding: 25px;
             box-shadow: 0 6px 15px rgba(0,0,0,0.05);
-            overflow: hidden; /* Importante para não vazar a tabela */
+            overflow: hidden; 
         }
 
         .panel-title {
@@ -178,7 +216,6 @@
             text-align: center;
         }
 
-        /* Contêiner Rolável para a Tabela (Responsividade Mobile) */
         .table-responsive {
             width: 100%;
             overflow-x: auto;
@@ -190,11 +227,11 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 14px;
-            min-width: 450px; /* Força scroll em telas muito pequenas */
+            min-width: 450px; 
         }
 
         .data-table th, .data-table td {
-            padding: 12px 10px;
+            padding: 10px 8px;
             text-align: right;
             border-bottom: 1px solid var(--border-color);
         }
@@ -203,7 +240,6 @@
             font-weight: bold; 
         }
         
-        /* Novo Contraste no Cabeçalho da Tabela */
         .data-table th { 
             background-color: var(--primary); 
             color: #ffffff; 
@@ -225,6 +261,7 @@
             font-size: 15px;
             font-weight: bold;
             color: var(--primary);
+            cursor: pointer;
         }
 
         .total-budget {
@@ -236,6 +273,14 @@
             font-weight: bold;
             font-size: 15px;
             border: 1px solid var(--border-color);
+        }
+
+        .footnote {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: right;
+            margin-top: 10px;
+            font-style: italic;
         }
 
         /* Contêineres de Gráficos */
@@ -251,16 +296,24 @@
             box-sizing: border-box;
             transition: opacity 0.3s ease;
         }
-        .chart-box.large { height: 65vh; }
+        .chart-box.large { height: 75vh; }
         .chart-title { margin: 0 0 15px 0; font-size: 20px; font-weight: 700; text-align: center; transition: color 0.3s ease; }
-        .canvas-container { position: relative; width: 100%; height: 40vh; min-height: 300px; }
+        .canvas-container { position: relative; width: 100%; height: 45vh; min-height: 350px; }
         .large .canvas-container { height: 100%; }
 
         .hidden { display: none !important; }
 
+        /* Responsividade para Celulares e Telas Menores */
         @media (max-width: 900px) {
             .home-container { grid-template-columns: 1fr; }
-            .header-top { flex-direction: column; gap: 15px; }
+            .header-top { 
+                display: flex; 
+                flex-direction: column; 
+                gap: 15px; 
+            }
+            .logo-wrapper, .toggle-wrapper { justify-content: center; width: 100%; }
+            .main-title { font-size: 18px; white-space: normal; text-align: center; }
+            .sub-title { font-size: 11px; letter-spacing: 2px; }
         }
     </style>
 </head>
@@ -270,13 +323,21 @@
         <!-- HEADER E CONTROLES GLOBAIS -->
         <div class="controls-wrapper">
             <div class="header-top">
-                <div class="logo-container">
+                <div class="logo-wrapper">
                     <img src="logo.png" alt="Logo">
                 </div>
-                <!-- Chave Mestra -->
-                <div class="global-toggle">
-                    <button class="toggle-btn active" id="btnModeLoa" onclick="setGlobalMode('loa')">Dotação (LOA)</button>
-                    <button class="toggle-btn" id="btnModeExec" onclick="setGlobalMode('exec')">Despesa Executada</button>
+                
+                <div class="title-wrapper">
+                    <h1 class="main-title">Trajetória Orçamentária TJSP 2015-2026</h1>
+                    <span class="sub-title">Uma Visão Panorâmica</span>
+                </div>
+                
+                <!-- Chave Mestra ocultada por padrão na home -->
+                <div class="toggle-wrapper hidden" id="globalToggleWrapper">
+                    <div class="global-toggle">
+                        <button class="toggle-btn active" id="btnModeLoa" onclick="setGlobalMode('loa')">Dotação (LOA)</button>
+                        <button class="toggle-btn" id="btnModeExec" onclick="setGlobalMode('exec')">Despesa Executada</button>
+                    </div>
                 </div>
             </div>
             
@@ -357,6 +418,7 @@
                                 <th>LOA (R$ Bi)</th>
                                 <th>Executado (R$ Bi)</th>
                                 <th>Diferença</th>
+                                <th>Incr. %</th>
                             </tr>
                         </thead>
                         <tbody id="comparativeTableBody">
@@ -364,6 +426,7 @@
                         </tbody>
                     </table>
                 </div>
+                <div class="footnote">* 2026: Relatório de Execução Orçamentária parcial apurado até Junho.</div>
             </div>
             
         </div>
@@ -386,10 +449,10 @@
 
     <script>
         // --- 1. CONFIGURAÇÕES E ESTADO GLOBAL ---
-        let currentMode = 'loa'; // Pode ser 'loa' ou 'exec'
+        let currentMode = 'loa'; 
         let currentAction = null; 
 
-        // Fatores de Correção do INPC exatos para Jan/2026 (IBGE via BCB)
+        // Fatores de Correção do INPC exatos para Jan/2026
         const inpcFactors = {
             '2015': 1.8355758, '2016': 1.6541581, '2017': 1.5403445, '2018': 1.5109598,
             '2019': 1.4590483, '2020': 1.4115253, '2021': 1.3417809, '2022': 1.2092636,
@@ -429,7 +492,7 @@
         let mapRankOrc = {};
         let mapRankSaldo = {};
 
-        // --- 3. BASE DE DADOS: RANKING ESTADUAL (12 Anos) ---
+        // --- 3. BASE DE DADOS: RANKING ESTADUAL ---
         const rankingEstado = {
             '2015': { total: 204.87, orgsCount: 29, orgaos: [{ nome: "Administração Geral do Estado", val: 61.80 }, { nome: "Fazenda e Planejamento", val: 30.60 }, { nome: "Secretaria da Educação", val: 28.42 }, { nome: "Secretaria da Saúde", val: 20.46 }, { nome: "Secretaria da Seg. Pública", val: 20.43 }, { nome: "Ciência, Tecnol. e Inovação", val: 14.64 }, { nome: "Transportes Metropolitanos", val: 10.80 }, { nome: "Tribunal de Justiça (TJSP)", val: 9.48, isTj: true }, { nome: "Logística e Transportes", val: 7.42 }, { nome: "Administração Penitenciária", val: 4.43 }] },
             '2016': { total: 207.16, orgsCount: 29, orgaos: [{ nome: "Administração Geral do Estado", val: 64.25 }, { nome: "Fazenda e Planejamento", val: 31.19 }, { nome: "Secretaria da Educação", val: 28.45 }, { nome: "Secretaria da Saúde", val: 21.37 }, { nome: "Secretaria da Seg. Pública", val: 20.47 }, { nome: "Ciência, Tecnol. e Inovação", val: 14.71 }, { nome: "Transportes Metropolitanos", val: 10.24 }, { nome: "Tribunal de Justiça (TJSP)", val: 10.07, isTj: true }, { nome: "Logística e Transportes", val: 6.29 }, { nome: "Administração Penitenciária", val: 4.36 }] },
@@ -450,22 +513,24 @@
             const tbody = document.getElementById('comparativeTableBody');
             tbody.innerHTML = '';
             
-            // Inverte a ordem do array para exibir do mais recente (2026) para o mais antigo (2015)
             [...tjData].reverse().forEach(d => {
-                const diff = (d.execTable - d.loa).toFixed(2);
+                const diff = (d.execTable - d.loa);
                 const isPositive = diff >= 0;
                 const diffClass = isPositive ? 'val-positive' : 'val-negative';
                 const sign = isPositive ? '+' : '';
                 
+                const incPerc = ((diff / d.loa) * 100).toFixed(1);
+                
                 let execDisplay = d.execTable.toFixed(2).replace('.', ',');
-                if(d.ano === '2026') execDisplay += ' <span style="font-size: 11px; color: #7f8c8d;">*(Até Jun)</span>';
+                let yearDisplay = d.ano === '2026' ? '2026*' : d.ano;
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${d.ano}</td>
+                    <td>${yearDisplay}</td>
                     <td>${d.loa.toFixed(2).replace('.', ',')}</td>
                     <td>${execDisplay}</td>
-                    <td class="${diffClass}">${sign}${diff.replace('.', ',')}</td>
+                    <td class="${diffClass}">${sign}${diff.toFixed(2).replace('.', ',')}</td>
+                    <td class="${diffClass}">${sign}${incPerc.replace('.', ',')}%</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -498,7 +563,7 @@
             document.getElementById('rankingTotal').innerHTML = `Orçamento Total do Estado em ${year}: <span style="color: var(--primary);">R$ ${data.total.toFixed(2).replace('.', ',')} Bilhões</span> <br><span style="font-size: 13px; font-weight: 500; color: #555;">(Total de ${data.orgsCount} órgãos orçamentários)</span>`;
         }
 
-        // --- 5. LÓGICA GRÁFICA (A CHAVE MESTRA) ---
+        // --- 5. LÓGICA GRÁFICA (EIXOS INTELIGENTES) ---
         window.setGlobalMode = function(mode) {
             currentMode = mode;
             
@@ -530,22 +595,20 @@
 
         function createBudgetConfig(dataset, typeBase, mode = '') {
             const dataKey = `${typeBase}_${currentMode}`; 
+            const isHorizontal = mode.includes('rank');
 
             const labels = dataset.map(d => {
                 let lbl = [...d.labelBase];
-                if (mode.includes('rank')) lbl.push(mapRankOrc[d.ano]);
+                if (isHorizontal) lbl.push(mapRankOrc[d.ano]);
                 return lbl;
             });
             const dataVals = dataset.map(d => d[dataKey]);
             
             const bgColor = dataset.map((d, i) => {
-                if (mode === 'rank_orc') {
+                if (isHorizontal) {
                     if (i === 0) return '#2ca02c'; 
                     if (i === dataset.length - 1) return '#d9534f'; 
                     return '#4a81ba'; 
-                }
-                if (mode === 'rank_saldo') {
-                    return '#9b59b6'; 
                 }
                 return typeBase === 'nominal' ? '#8da9c4' : '#d9534f'; 
             });
@@ -560,6 +623,7 @@
                 type: 'bar',
                 data: { labels: labels, datasets: [{ data: dataVals, backgroundColor: bgColor, borderRadius: 4 }] },
                 options: {
+                    indexAxis: isHorizontal ? 'y' : 'x', 
                     responsive: true, maintainAspectRatio: false,
                     plugins: { 
                         legend: { display: false },
@@ -567,13 +631,19 @@
                             backgroundColor: 'rgba(0,0,0,0.8)', padding: 12, titleFont: {size: 14}, bodyFont: {size: 16, weight: 'bold'},
                             callbacks: {
                                 title: tooltipTitleCb,
-                                label: (ctx) => ' R$ ' + ctx.parsed.y.toFixed(2).replace('.', ',') + ' Bilhões'
+                                label: (ctx) => ' R$ ' + ctx.parsed[isHorizontal ? 'x' : 'y'].toFixed(2).replace('.', ',') + ' Bilhões'
                             }
                         }
                     },
                     scales: {
-                        y: { beginAtZero: true, min: 0, suggestedMax: 24, title: {display: true, text: 'Bilhões (R$)', font: {weight: 'bold'}}, ticks: {callback: v => 'R$ ' + v} },
-                        x: { ticks: { font: {weight: 'bold'}, color: ctx => ctx.tick.label && ctx.tick.label.includes('GREVE') ? ['#333', '#d9534f'] : '#333' } }
+                        [isHorizontal ? 'x' : 'y']: { 
+                            beginAtZero: true, min: 0, suggestedMax: 24, 
+                            title: {display: true, text: 'Bilhões (R$)', font: {weight: 'bold'}}, 
+                            ticks: {callback: v => 'R$ ' + v} 
+                        },
+                        [isHorizontal ? 'y' : 'x']: { 
+                            ticks: { font: {weight: 'bold'}, color: ctx => ctx.tick.label && ctx.tick.label.includes('GREVE') ? ['#333', '#d9534f'] : '#333' } 
+                        }
                     },
                     animation: { duration: 800, easing: 'easeOutQuart' }
                 }
@@ -581,21 +651,24 @@
         }
 
         function createSalarialConfig(dataset, mode = '') {
+            const isHorizontal = mode.includes('rank');
             const labels = dataset.map(d => {
                 let lbl = [...d.labelBase];
-                if (mode.includes('rank')) lbl.push(mapRankSaldo[d.ano]);
+                if (isHorizontal) lbl.push(mapRankSaldo[d.ano]);
                 return lbl;
             });
+            
             return {
                 type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [
-                        { label: 'Inflação', data: dataset.map(d=>d.inf), backgroundColor: 'rgba(243, 156, 18, 0.2)', borderColor: '#e67e22', borderWidth: 2, grouped: false, categoryPercentage: 0.8, barPercentage: 0.9, borderRadius: 3 },
-                        { label: 'Reposição', data: dataset.map(d=>d.rep), backgroundColor: 'rgba(41, 128, 255, 1)', borderColor: '#2471a3', borderWidth: 1, grouped: false, categoryPercentage: 0.8, barPercentage: 0.45, borderRadius: 3 }
+                        { label: 'Inflação', data: dataset.map(d=>d.inf), backgroundColor: 'rgba(243, 156, 18, 0.2)', borderColor: '#e67e22', borderWidth: 2, grouped: !isHorizontal, categoryPercentage: 0.8, barPercentage: 0.9, borderRadius: 3 },
+                        { label: 'Reposição', data: dataset.map(d=>d.rep), backgroundColor: 'rgba(41, 128, 255, 1)', borderColor: '#2471a3', borderWidth: 1, grouped: !isHorizontal, categoryPercentage: 0.8, barPercentage: 0.45, borderRadius: 3 }
                     ]
                 },
                 options: {
+                    indexAxis: isHorizontal ? 'y' : 'x', 
                     responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
                     plugins: {
                         legend: { display: true, position: 'top' },
@@ -603,10 +676,13 @@
                             backgroundColor: 'rgba(255,255,255,0.95)', titleColor: '#333', bodyColor: '#333', borderColor: '#ccc', borderWidth: 1, padding: 12, titleFont: {size: 14}, bodyFont: {size: 14, weight: 'bold'},
                             callbacks: {
                                 title: (ctx) => Array.isArray(ctx[0].label) ? ctx[0].label[0] : ctx[0].label,
-                                label: (ctx) => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(2) + '%',
+                                label: (ctx) => ctx.dataset.label + ': ' + ctx.parsed[isHorizontal ? 'x' : 'y'].toFixed(2) + '%',
                                 afterBody: (ctx) => {
                                     let inf=0, rep=0;
-                                    ctx.forEach(i => { if(i.datasetIndex === 0) inf = i.parsed.y; else rep = i.parsed.y; });
+                                    ctx.forEach(i => { 
+                                        let val = i.parsed[isHorizontal ? 'x' : 'y'];
+                                        if(i.datasetIndex === 0) inf = val; else rep = val; 
+                                    });
                                     let saldo = (rep - inf).toFixed(2);
                                     return '\nSaldo: ' + (saldo > 0 ? '+' : '') + saldo + '%';
                                 }
@@ -614,9 +690,16 @@
                         }
                     },
                     scales: {
-                        y: { beginAtZero: true, min: 0, suggestedMax: 12, title: {display: true, text: 'Índice (%)', font: {weight: 'bold'}}, ticks: {callback: v => v + '%'} },
-                        x: { ticks: { font: {weight: 'bold'}, color: ctx => ctx.tick.label && ctx.tick.label.includes('GREVE') ? ['#333', '#d9534f'] : '#333' } }
-                    }
+                        [isHorizontal ? 'x' : 'y']: { 
+                            beginAtZero: true, min: 0, suggestedMax: 12, 
+                            title: {display: true, text: 'Índice (%)', font: {weight: 'bold'}}, 
+                            ticks: {callback: v => v + '%'} 
+                        },
+                        [isHorizontal ? 'y' : 'x']: { 
+                            ticks: { font: {weight: 'bold'}, color: ctx => ctx.tick.label && ctx.tick.label.includes('GREVE') ? ['#333', '#d9534f'] : '#333' } 
+                        }
+                    },
+                    animation: { duration: 800, easing: 'easeOutQuart' }
                 }
             };
         }
@@ -743,7 +826,12 @@
                     document.getElementById('homeView').classList.remove('hidden');
                     document.getElementById('topChartBox').classList.add('hidden');
                     document.getElementById('bottomChartBox').classList.add('hidden');
+                    // Oculta a chave mestra na Home
+                    document.getElementById('globalToggleWrapper').classList.add('hidden');
                 } else {
+                    // Mostra a chave mestra nas abas de gráficos
+                    document.getElementById('globalToggleWrapper').classList.remove('hidden');
+                    
                     if (targetTab === 'menu1') {
                         document.getElementById('subMenu1').classList.remove('hidden');
                         document.querySelector('[data-action="m1_nominal"]').click(); 
