@@ -51,7 +51,7 @@
             flex-direction: column;
         }
 
-        /* Cabeçalho Topo (Logo, Título e Chave Mestra) - Atualizado para Grid */
+        /* Cabeçalho Topo (Logo, Título e Chave Mestra) */
         .header-top {
             display: grid;
             grid-template-columns: 1fr auto 1fr;
@@ -595,17 +595,16 @@
 
         function createBudgetConfig(dataset, typeBase, mode = '') {
             const dataKey = `${typeBase}_${currentMode}`; 
-            const isHorizontal = mode.includes('rank');
 
             const labels = dataset.map(d => {
                 let lbl = [...d.labelBase];
-                if (isHorizontal) lbl.push(mapRankOrc[d.ano]);
+                if (mode.includes('rank')) lbl.push(mapRankOrc[d.ano]);
                 return lbl;
             });
             const dataVals = dataset.map(d => d[dataKey]);
             
             const bgColor = dataset.map((d, i) => {
-                if (isHorizontal) {
+                if (mode.includes('rank')) {
                     if (i === 0) return '#2ca02c'; 
                     if (i === dataset.length - 1) return '#d9534f'; 
                     return '#4a81ba'; 
@@ -623,7 +622,6 @@
                 type: 'bar',
                 data: { labels: labels, datasets: [{ data: dataVals, backgroundColor: bgColor, borderRadius: 4 }] },
                 options: {
-                    indexAxis: isHorizontal ? 'y' : 'x', 
                     responsive: true, maintainAspectRatio: false,
                     plugins: { 
                         legend: { display: false },
@@ -631,17 +629,17 @@
                             backgroundColor: 'rgba(0,0,0,0.8)', padding: 12, titleFont: {size: 14}, bodyFont: {size: 16, weight: 'bold'},
                             callbacks: {
                                 title: tooltipTitleCb,
-                                label: (ctx) => ' R$ ' + ctx.parsed[isHorizontal ? 'x' : 'y'].toFixed(2).replace('.', ',') + ' Bilhões'
+                                label: (ctx) => ' R$ ' + ctx.parsed.y.toFixed(2).replace('.', ',') + ' Bilhões'
                             }
                         }
                     },
                     scales: {
-                        [isHorizontal ? 'x' : 'y']: { 
+                        y: { 
                             beginAtZero: true, min: 0, suggestedMax: 24, 
                             title: {display: true, text: 'Bilhões (R$)', font: {weight: 'bold'}}, 
                             ticks: {callback: v => 'R$ ' + v} 
                         },
-                        [isHorizontal ? 'y' : 'x']: { 
+                        x: { 
                             ticks: { font: {weight: 'bold'}, color: ctx => ctx.tick.label && ctx.tick.label.includes('GREVE') ? ['#333', '#d9534f'] : '#333' } 
                         }
                     },
@@ -650,11 +648,11 @@
             };
         }
 
+        // Trazendo as colunas verticais com a configuração grouped: false forçada
         function createSalarialConfig(dataset, mode = '') {
-            const isHorizontal = mode.includes('rank');
             const labels = dataset.map(d => {
                 let lbl = [...d.labelBase];
-                if (isHorizontal) lbl.push(mapRankSaldo[d.ano]);
+                if (mode.includes('rank')) lbl.push(mapRankSaldo[d.ano]);
                 return lbl;
             });
             
@@ -663,12 +661,11 @@
                 data: {
                     labels: labels,
                     datasets: [
-                        { label: 'Inflação', data: dataset.map(d=>d.inf), backgroundColor: 'rgba(243, 156, 18, 0.2)', borderColor: '#e67e22', borderWidth: 2, grouped: !isHorizontal, categoryPercentage: 0.8, barPercentage: 0.9, borderRadius: 3 },
-                        { label: 'Reposição', data: dataset.map(d=>d.rep), backgroundColor: 'rgba(41, 128, 255, 1)', borderColor: '#2471a3', borderWidth: 1, grouped: !isHorizontal, categoryPercentage: 0.8, barPercentage: 0.45, borderRadius: 3 }
+                        { label: 'Inflação', data: dataset.map(d=>d.inf), backgroundColor: 'rgba(243, 156, 18, 0.2)', borderColor: '#e67e22', borderWidth: 2, grouped: false, categoryPercentage: 0.8, barPercentage: 0.9, borderRadius: 3 },
+                        { label: 'Reposição', data: dataset.map(d=>d.rep), backgroundColor: 'rgba(41, 128, 255, 1)', borderColor: '#2471a3', borderWidth: 1, grouped: false, categoryPercentage: 0.8, barPercentage: 0.45, borderRadius: 3 }
                     ]
                 },
                 options: {
-                    indexAxis: isHorizontal ? 'y' : 'x', 
                     responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
                     plugins: {
                         legend: { display: true, position: 'top' },
@@ -676,11 +673,11 @@
                             backgroundColor: 'rgba(255,255,255,0.95)', titleColor: '#333', bodyColor: '#333', borderColor: '#ccc', borderWidth: 1, padding: 12, titleFont: {size: 14}, bodyFont: {size: 14, weight: 'bold'},
                             callbacks: {
                                 title: (ctx) => Array.isArray(ctx[0].label) ? ctx[0].label[0] : ctx[0].label,
-                                label: (ctx) => ctx.dataset.label + ': ' + ctx.parsed[isHorizontal ? 'x' : 'y'].toFixed(2) + '%',
+                                label: (ctx) => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(2) + '%',
                                 afterBody: (ctx) => {
                                     let inf=0, rep=0;
                                     ctx.forEach(i => { 
-                                        let val = i.parsed[isHorizontal ? 'x' : 'y'];
+                                        let val = i.parsed.y;
                                         if(i.datasetIndex === 0) inf = val; else rep = val; 
                                     });
                                     let saldo = (rep - inf).toFixed(2);
@@ -690,12 +687,12 @@
                         }
                     },
                     scales: {
-                        [isHorizontal ? 'x' : 'y']: { 
+                        y: { 
                             beginAtZero: true, min: 0, suggestedMax: 12, 
                             title: {display: true, text: 'Índice (%)', font: {weight: 'bold'}}, 
                             ticks: {callback: v => v + '%'} 
                         },
-                        [isHorizontal ? 'y' : 'x']: { 
+                        x: { 
                             ticks: { font: {weight: 'bold'}, color: ctx => ctx.tick.label && ctx.tick.label.includes('GREVE') ? ['#333', '#d9534f'] : '#333' } 
                         }
                     },
@@ -826,10 +823,8 @@
                     document.getElementById('homeView').classList.remove('hidden');
                     document.getElementById('topChartBox').classList.add('hidden');
                     document.getElementById('bottomChartBox').classList.add('hidden');
-                    // Oculta a chave mestra na Home
                     document.getElementById('globalToggleWrapper').classList.add('hidden');
                 } else {
-                    // Mostra a chave mestra nas abas de gráficos
                     document.getElementById('globalToggleWrapper').classList.remove('hidden');
                     
                     if (targetTab === 'menu1') {
