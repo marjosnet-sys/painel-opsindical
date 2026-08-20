@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Executivo TJSP: Orçamento, Salários e Efetivo</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #8da9c4;
+            --accent-red: #d9534f;
+            --accent-green: #00a884;
+            --accent-purple: #8e44ad;
+            --bg-body: #f4f7f6;
+            --bg-card: #ffffff;
+            --text-dark: #333;
+            --text-muted: #7f8c8d;
+            --border-color: #e0e6ed;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 20px;
+            margin: 0;
+        }
+
+        .dashboard {
+            width: 100%;
+            max-width: 1150px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Área de Controle e Abas */
+        .controls-wrapper {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Cabeçalho Topo */
+        .header-top {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            padding: 15px 25px;
+            background-color: #f8fafc;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo-wrapper { 
+            display: flex; 
+            justify-content: flex-start; 
+        }
+        
+        .logo-wrapper img { 
+            height: 75px; 
+            width: 75px;
+            object-fit: cover;
+            border-radius: 50%; /* Garante o formato circular */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Agrupamento do Título e Subtítulo */
+        .title-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .main-title {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 900;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .sub-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-top: 4px;
+        }
+
+        .toggle-wrapper {
+            display: flex;
+            justify-content: flex-end;
+            transition: opacity 0.3s ease;
+        }
+
+        .global-toggle {
+            display: flex;
+            background-color: #e2e8f0;
+            border-radius: 30px;
+            padding: 4px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+        }
+
+        .toggle-btn {
+            background: transparent;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-btn.active {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        /* Menu Principal (Abas) */
+        .main-menu {
+            display: flex;
+            background-color: #eef2f5;
+            border-bottom: 2px solid var(--border-color);
+            padding-top: 5px;
+            overflow-x: auto; 
+            -webkit-overflow-scrolling: touch; 
+            scrollbar-width: none; 
+        }
+        .main-menu::-webkit-scrollbar { display: none; }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 15px 20px;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover { color: var(--primary); }
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+            background-color: var(--bg-card);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .sub-menu {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 15px;
+            background-color: var(--bg-card);
+        }
+
+        .sub-btn {
+            background-color: var(--border-color);
+            color: #555;
+            border: 2px solid transparent;
+            padding: 8px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sub-btn:hover { background-color: #cbd4db; }
+        .sub-btn.active { box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+        .sub-btn.active[data-color="nominal"] { background-color: var(--secondary); color: white; border-color: #5a7d9a; }
+        .sub-btn.active[data-color="real"] { background-color: var(--accent-red); color: white; border-color: #b52b27; }
+        .sub-btn.active[data-color="ranking"] { background-color: var(--primary); color: white; border-color: #1a252f; }
+        .sub-btn.active[data-color="saldo"] { background-color: var(--accent-purple); color: white; border-color: #732d91; }
+        .sub-btn.active[data-color="servidores"] { background-color: var(--accent-green); color: white; border-color: #007a60; }
+        .sub-btn.active[data-color="bonus"] { background-color: #e67e22; color: white; border-color: #d35400; }
+
+        /* Estilos da Home / Tabelas */
+        .home-wrapper { width: 100%; display: flex; flex-direction: column; gap: 20px; }
+        
+        .home-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .panel-card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            padding: 25px 25px 35px 25px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+            overflow: hidden; 
+            position: relative;
+        }
+
+        .panel-title {
+            margin: 0 0 15px 0;
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--primary);
+            text-align: center;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 6px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            min-width: 450px; 
+        }
+
+        .data-table th, .data-table td {
+            padding: 10px 8px;
+            text-align: right;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .data-table th:first-child, .data-table td:first-child { 
+            text-align: center; 
+            font-weight: bold; 
+        }
+        
+        .data-table th { 
+            background-color: var(--primary); 
+            color: #ffffff; 
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        
+        .data-table tr:hover { background-color: #f1f5f9; }
+        
+        .val-positive { color: var(--accent-green); font-weight: bold; }
+        .val-negative { color: var(--accent-red); font-weight: bold; }
+        
+        .select-year {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: bold;
+            color: var(--primary);
+            cursor: pointer;
+        }
+
+        .total-budget {
+            margin-top: 15px;
+            padding: 12px;
+            background-color: #f8fafc;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 15px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            z-index: 2;
+        }
+
+        .footnote {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: right;
+            margin-top: 10px;
+            font-style: italic;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Contêineres de Gráficos */
+        .chart-box {
+            background-color: var(--bg-card);
+            padding: 25px 30px 40px 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            box-sizing: border-box;
+            transition: opacity 0.3s ease;
+            position: relative;
+        }
+        .chart-box.large { height: 75vh; }
+        .chart-title { margin: 0 0 15px 0; font-size: 20px; font-weight: 700; text-align: center; transition: color 0.3s ease; }
+        .canvas-container { position: relative; width: 100%; height: 45vh; min-height: 350px; z-index: 2; }
+        .large .canvas-container { height: 100%; }
+
+        /* Estilo da Marca D'água Híbrida (Anti-Print) */
+        .watermark {
+            position: absolute;
+            bottom: 12px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .watermark img {
+            height: 25px;
+            width: 25px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .watermark-text {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Rodapé Oficial da Página */
+        .dashboard-footer {
+            text-align: center;
+            padding: 25px 20px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-muted);
+            width: 100%;
+            border-top: 1px solid #dcdde1;
+        }
+        .dashboard-footer strong {
+            color: var(--primary);
+            font-weight: 800;
+        }
+
+        .hidden { display: none !important; }
+        .invisible { visibility: hidden; opacity: 0; pointer-events: none; }
+
+        /* Responsividade */
+        @media (max-width: 900px) {
+            .home-container { grid-template-columns: 1fr; }
+            .header-top { 
+                display: flex; 
+                flex-direction: column; 
+                gap: 15px; 
+            }
+            .logo-wrapper, .toggle-wrapper { justify-content: center; width: 100%; }
+            .main-title { font-size: 18px; white-space: normal; text-align: center; }
+            .sub-title { font-size: 11px; letter-spacing: 2px; }
+            
+            .watermark { bottom: 8px; right: 15px; }
+            .watermark img { height: 20px; width: 20px; }
+            .watermark-text { font-size: 9px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        <!-- HEADER E CONTROLES GLOBAIS -->
+        <div class="controls-wrapper">
+            <div class="header-top">
+                <div class="logo-wrapper">
+                    <img src="LOGO APRIMORADO TRANSPARÊNCIA.png" alt="Logo Coletivo de Oposição Sindical Unidade e Luta">
+                </div>
+                
+                <div class="title-wrapper">
+                    <h1 class="main-title">Trajetória Orçamentária TJSP 2015-2026</h1>
+                    <span class="sub-title">Uma Visão Panorâmica</span>
+                </div>
+                
+                <div class="toggle-wrapper invisible" id="globalToggleWrapper">
+                    <div class="global-toggle">
+                        <button class="toggle-btn active" id="btnModeLoa" onclick="setGlobalMode('loa')">Dotação (LOA)</button>
+                        <button class="toggle-btn" id="btnModeExec" onclick="setGlobalMode('exec')">Despesa Executada</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="main-menu" id="mainMenu">
+                <button class="tab-btn active" data-tab="menu0">0. Sumário Executivo</button>
+                <button class="tab-btn" data-tab="menu1">1. Orçamento</button>
+                <button class="tab-btn" data-tab="menu2">2. Orç. x Salário</button>
+                <button class="tab-btn" data-tab="menu3">3. Efetivo</button>
+                <button class="tab-btn" data-tab="menu4">4. Raio-X 3D</button>
+            </div>
+
+            <!-- Submenus das abas de gráficos -->
+            <div class="sub-menu hidden" id="subMenu1">
+                <button class="sub-btn active" data-action="m1_nominal" data-color="nominal">Nominal</button>
+                <button class="sub-btn" data-action="m1_real" data-color="real">Real Corrigido</button>
+            </div>
+            <div class="sub-menu hidden" id="subMenu2">
+                <button class="sub-btn active" data-action="m2_crono" data-color="real">Cronológica</button>
+                <button class="sub-btn" data-action="m2_rank_orc" data-color="ranking">Rank Orçamento</button>
+                <button class="sub-btn" data-action="m2_rank_saldo" data-color="saldo">Rank Saldo</button>
+            </div>
+            <div class="sub-menu hidden" id="subMenu3">
+                <button class="sub-btn active" data-action="m3_orc" data-color="real">vs Orçamento</button>
+                <button class="sub-btn" data-action="m3_saldo" data-color="saldo">vs Saldo</button>
+            </div>
+            <div class="sub-menu hidden" id="subMenu4">
+                <button class="sub-btn active" data-action="m4_bubble" data-color="bonus">Ativar Bolhas</button>
+            </div>
+        </div>
+
+        <!-- ABA 0: SUMÁRIO EXECUTIVO (HOME) -->
+        <div class="home-wrapper" id="homeView">
+            <div class="home-container">
+
+		<!-- Tabela Comparativa -->
+                <div class="panel-card">
+                    <h3 class="panel-title">Evolução do Orçamento TJSP: LOA vs Execução</h3>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Ano</th>
+                                    <th>LOA (R$ Bi)</th>
+                                    <th>Executado (R$ Bi)</th>
+                                    <th>Diferença</th>
+                                    <th>Incr. %</th>
+                                </tr>
+                            </thead>
+                            <tbody id="comparativeTableBody">
+                                <!-- Preenchido via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="footnote">* 2026: Relatório de Execução Orçamentária parcial apurado até Junho.</div>
+		<!-- MARCA D'ÁGUA -->
+                    <div class="watermark">
+                        <img src="LOGO APRIMORADO TRANSPARÊNCIA.png" alt="Logo">
+                        <span class="watermark-text">Coletivo de Oposição Sindical Unidade e Luta (Sind. União)</span>
+                    </div>
+                </div>
+
+                <!-- Ranking do Estado -->
+                <div class="panel-card">
+                    <h3 class="panel-title">Ranking Orçamentário Paulista (LOA)</h3>
+                    <select class="select-year" id="yearSelector" onchange="renderRankingTable()">
+                        <option value="2026">Projeção 2026</option>
+                        <option value="2025">Ano 2025</option>
+                        <option value="2024">Ano 2024</option>
+                        <option value="2023">Ano 2023</option>
+                        <option value="2022">Ano 2022</option>
+                        <option value="2021">Ano 2021</option>
+                        <option value="2020">Ano 2020</option>
+                        <option value="2019">Ano 2019</option>
+                        <option value="2018">Ano 2018</option>
+                        <option value="2017">Ano 2017</option>
+                        <option value="2016">Ano 2016</option>
+                        <option value="2015">Ano 2015</option>
+                    </select>
+                    
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Pos.</th>
+                                    <th style="text-align: left;">Órgão/Secretaria</th>
+                                    <th>Valor (R$ Bi)</th>
+                                    <th>% do Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rankingTableBody">
+                                <!-- Preenchido via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="total-budget" id="rankingTotal"></div>
+                    
+                    <!-- MARCA D'ÁGUA -->
+                    <div class="watermark">
+                        <img src="LOGO APRIMORADO TRANSPARÊNCIA.png" alt="Logo">
+                        <span class="watermark-text">Coletivo de Oposição Sindical Unidade e Luta (Sind. União)</span>
+                    </div>
+                </div>
+                
+                    
+            </div>
+        </div>
+
+        <!-- ABAS DE GRÁFICOS (1 a 4) -->
+        <div class="chart-box hidden" id="topChartBox">
+            <h2 class="chart-title" id="topChartTitle">Título Superior</h2>
+            <div class="canvas-container">
+                <canvas id="topCanvas"></canvas>
+            </div>
+            <!-- MARCA D'ÁGUA -->
+            <div class="watermark">
+                <img src="LOGO APRIMORADO TRANSPARÊNCIA.png" alt="Logo">
+                <span class="watermark-text">Coletivo de Oposição Sindical Unidade e Luta (Sind. União)</span>
+            </div>
+        </div>
+
+        <div class="chart-box hidden" id="bottomChartBox">
+            <h2 class="chart-title" id="bottomChartTitle">Título Inferior</h2>
+            <div class="canvas-container">
+                <canvas id="bottomCanvas"></canvas>
+            </div>
+            <!-- MARCA D'ÁGUA -->
+            <div class="watermark">
+                <img src="LOGO APRIMORADO TRANSPARÊNCIA.png" alt="Logo">
+                <span class="watermark-text">Coletivo de Oposição Sindical Unidade e Luta (Sind. União)</span>
+            </div>
+        </div>
+
+        <!-- RODAPÉ OFICIAL -->
+        <footer class="dashboard-footer">
+            Desenvolvido por <strong>Coletivo de Oposição Sindical Unidade e Luta (Sind. União)</strong><br>
+            Dados extraídos da Lei Orçamentária Anual (LOA) e dos Relatórios de Execução Orçamentária do TJSP (2015-2026).
+        </footer>
+
+    </div>
+
+    <script>
+        // --- 1. CONFIGURAÇÕES E ESTADO GLOBAL ---
+        let currentMode = 'loa'; 
+        let currentAction = null; 
+
+        const inpcFactors = {
+            '2015': 1.8355758, '2016': 1.6541581, '2017': 1.5403445, '2018': 1.5109598,
+            '2019': 1.4590483, '2020': 1.4115253, '2021': 1.3417809, '2022': 1.2092636,
+            '2023': 1.1410898, '2024': 1.0987719, '2025': 1.0480372, '2026': 1.0000000
+        };
+
+        // --- 2. BASE DE DADOS: TJSP ---
+        const tjData = [
+            { ano: '2015', loa: 9.48, execTable: 10.27, execChart: 10.27, inf: 7.68, rep: 7.68, serv: 43000 },
+            { ano: '2016', loa: 10.07, execTable: 10.89, execChart: 10.89, inf: 11.08, rep: 7.08, serv: 43200 },
+            { ano: '2017', loa: 10.77, execTable: 12.02, execChart: 12.02, inf: 4.69, rep: 5.20, serv: 42900 },
+            { ano: '2018', loa: 11.67, execTable: 12.13, execChart: 12.13, inf: 1.81, rep: 1.81, serv: 42200 },
+            { ano: '2019', loa: 11.84, execTable: 13.01, execChart: 13.01, inf: 3.94, rep: 3.94, serv: 40450 },
+            { ano: '2020', loa: 12.31, execTable: 12.53, execChart: 12.53, inf: 3.92, rep: 0.00, serv: 38750 },
+            { ano: '2021', loa: 12.36, execTable: 12.84, execChart: 12.84, inf: 6.22, rep: 0.00, serv: 38120 },
+            { ano: '2022', loa: 13.53, execTable: 14.14, execChart: 14.14, inf: 10.80, rep: 10.00, serv: 38650 },
+            { ano: '2023', loa: 15.53, execTable: 16.05, execChart: 16.05, inf: 5.47, rep: 6.00, serv: 39850 },
+            { ano: '2024', loa: 15.90, execTable: 16.46, execChart: 16.46, inf: 3.86, rep: 4.00, serv: 40850 },
+            { ano: '2025', loa: 17.65, execTable: 20.45, execChart: 20.45, inf: 4.87, rep: 7.63, serv: 41250 },
+            { ano: '2026', loa: 19.38, execTable: 9.55, execChart: 19.38, inf: 3.36, rep: 4.25, serv: 40900 }
+        ];
+
+        const baseData = tjData.map(d => {
+            const factor = inpcFactors[d.ano];
+            return {
+                ...d,
+                saldo: parseFloat((d.rep - d.inf).toFixed(2)),
+                labelBase: d.ano === '2025' ? ['2025', 'GREVE'] : [d.ano],
+                nominal_loa: d.loa,
+                nominal_exec: d.execChart,
+                real_loa: parseFloat((d.loa * factor).toFixed(2)),
+                real_exec: parseFloat((d.execChart * factor).toFixed(2))
+            };
+        });
+
+        const dataCrono = [...baseData];
+        let mapRankOrc = {};
+        let mapRankSaldo = {};
+
+        // --- 3. BASE DE DADOS: RANKING ESTADUAL ---
+        const rankingEstado = {
+            '2015': { total: 204.87, orgsCount: 29, orgaos: [{ nome: "Administração Geral do Estado", val: 61.80 }, { nome: "Fazenda e Planejamento", val: 30.60 }, { nome: "Secretaria da Educação", val: 28.42 }, { nome: "Secretaria da Saúde", val: 20.46 }, { nome: "Secretaria da Seg. Pública", val: 20.43 }, { nome: "Ciência, Tecnol. e Inovação", val: 14.64 }, { nome: "Transportes Metropolitanos", val: 10.80 }, { nome: "Tribunal de Justiça (TJSP)", val: 9.48, isTj: true }, { nome: "Logística e Transportes", val: 7.42 }, { nome: "Administração Penitenciária", val: 4.43 }] },
+            '2016': { total: 207.16, orgsCount: 29, orgaos: [{ nome: "Administração Geral do Estado", val: 64.25 }, { nome: "Fazenda e Planejamento", val: 31.19 }, { nome: "Secretaria da Educação", val: 28.45 }, { nome: "Secretaria da Saúde", val: 21.37 }, { nome: "Secretaria da Seg. Pública", val: 20.47 }, { nome: "Ciência, Tecnol. e Inovação", val: 14.71 }, { nome: "Transportes Metropolitanos", val: 10.24 }, { nome: "Tribunal de Justiça (TJSP)", val: 10.07, isTj: true }, { nome: "Logística e Transportes", val: 6.29 }, { nome: "Administração Penitenciária", val: 4.36 }] },
+            '2017': { total: 206.39, orgsCount: 29, orgaos: [{ nome: "Administração Geral do Estado", val: 58.31 }, { nome: "Fazenda e Planejamento", val: 32.98 }, { nome: "Secretaria da Educação", val: 30.45 }, { nome: "Secretaria da Saúde", val: 22.18 }, { nome: "Secretaria da Seg. Pública", val: 21.51 }, { nome: "Ciência, Tecnol. e Inovação", val: 14.53 }, { nome: "Tribunal de Justiça (TJSP)", val: 10.77, isTj: true }, { nome: "Transportes Metropolitanos", val: 9.32 }, { nome: "Logística e Transportes", val: 6.59 }, { nome: "Administração Penitenciária", val: 4.56 }] },
+            '2018': { total: 216.91, orgsCount: 29, orgaos: [{ nome: "Administração Geral do Estado", val: 64.55 }, { nome: "Fazenda e Planejamento", val: 35.72 }, { nome: "Secretaria da Educação", val: 30.78 }, { nome: "Secretaria da Saúde", val: 22.43 }, { nome: "Secretaria da Seg. Pública", val: 21.54 }, { nome: "Ciência, Tecnol. e Inovação", val: 15.04 }, { nome: "Tribunal de Justiça (TJSP)", val: 11.67, isTj: true }, { nome: "Transportes Metropolitanos", val: 9.62 }, { nome: "Logística e Transportes", val: 7.29 }, { nome: "Administração Penitenciária", val: 4.57 }] },
+            '2019': { total: 231.16, orgsCount: 29, orgaos: [{ nome: "Administração Geral do Estado", val: 71.68 }, { nome: "Fazenda e Planejamento", val: 39.02 }, { nome: "Secretaria da Educação", val: 32.44 }, { nome: "Secretaria da Saúde", val: 23.39 }, { nome: "Secretaria da Seg. Pública", val: 22.43 }, { nome: "Ciência, Tecnol. e Inovação", val: 16.69 }, { nome: "Tribunal de Justiça (TJSP)", val: 11.84, isTj: true }, { nome: "Transportes Metropolitanos", val: 8.68 }, { nome: "Logística e Transportes", val: 6.97 }, { nome: "Administração Penitenciária", val: 4.48 }] },
+            '2020': { total: 239.14, orgsCount: 29, orgaos: [{ nome: "Administração Geral do Estado", val: 74.25 }, { nome: "Fazenda e Planejamento", val: 43.41 }, { nome: "Secretaria da Educação", val: 32.69 }, { nome: "Secretaria da Saúde", val: 24.56 }, { nome: "Secretaria da Seg. Pública", val: 24.56 }, { nome: "Secretaria de Desenv. Econômico", val: 17.50 }, { nome: "Tribunal de Justiça (TJSP)", val: 12.31, isTj: true }, { nome: "Transportes Metropolitanos", val: 8.16 }, { nome: "Logística e Transportes", val: 5.33 }, { nome: "Administração Penitenciária", val: 4.50 }] },
+            '2021': { total: 246.33, orgsCount: 30, orgaos: [{ nome: "Administração Geral do Estado", val: 82.46 }, { nome: "Gestão e Governo Digital", val: 45.30 }, { nome: "Secretaria da Educação", val: 35.56 }, { nome: "Secretaria da Saúde", val: 23.87 }, { nome: "Secretaria da Seg. Pública", val: 22.07 }, { nome: "Secretaria de Desenv. Econômico", val: 16.38 }, { nome: "Tribunal de Justiça (TJSP)", val: 12.36, isTj: true }, { nome: "Transportes Metropolitanos", val: 7.34 }, { nome: "Logística e Transportes", val: 6.47 }, { nome: "Administração Penitenciária", val: 4.44 }] },
+            '2022': { total: 286.79, orgsCount: 30, orgaos: [{ nome: "Administração Geral do Estado", val: 92.90 }, { nome: "Gestão e Governo Digital", val: 46.92 }, { nome: "Secretaria da Educação", val: 42.25 }, { nome: "Secretaria da Saúde", val: 26.77 }, { nome: "Secretaria da Seg. Pública", val: 23.64 }, { nome: "Secretaria de Desenv. Econômico", val: 21.35 }, { nome: "Tribunal de Justiça (TJSP)", val: 13.53, isTj: true }, { nome: "Transportes Metropolitanos", val: 10.12 }, { nome: "Logística e Transportes", val: 9.00 }, { nome: "Administração Penitenciária", val: 4.81 }] },
+            '2023': { total: 317.40, orgsCount: 32, orgaos: [{ nome: "Administração Geral do Estado", val: 99.22 }, { nome: "Gestão e Governo Digital", val: 49.84 }, { nome: "Secretaria da Educação", val: 49.51 }, { nome: "Secretaria da Saúde", val: 29.40 }, { nome: "Secretaria da Seg. Pública", val: 27.46 }, { nome: "Secretaria de Desenv. Econômico", val: 23.34 }, { nome: "Tribunal de Justiça (TJSP)", val: 15.53, isTj: true }, { nome: "Transportes Metropolitanos", val: 13.13 }, { nome: "Logística e Transportes", val: 9.77 }, { nome: "Administração Penitenciária", val: 5.64 }] },
+            '2024': { total: 328.06, orgsCount: 32, orgaos: [{ nome: "Administração Geral do Estado", val: 107.49 }, { nome: "Gestão e Governo Digital", val: 59.22 }, { nome: "Secretaria da Educação", val: 31.98 }, { nome: "Secretaria da Saúde", val: 30.20 }, { nome: "Ciência, Tecnol. e Inovação", val: 20.54 }, { nome: "Secretaria da Seg. Pública", val: 18.61 }, { nome: "Tribunal de Justiça (TJSP)", val: 15.90, isTj: true }, { nome: "Transportes Metropolitanos", val: 15.73 }, { nome: "Meio Amb., Infraest. e Logística", val: 7.40 }, { nome: "Administração Penitenciária", val: 5.55 }] },
+            '2025': { total: 372.45, orgsCount: 32, orgaos: [{ nome: "Administração Geral do Estado", val: 123.73 }, { nome: "Gestão e Governo Digital", val: 63.13 }, { nome: "Secretaria da Saúde", val: 36.40 }, { nome: "Secretaria da Educação", val: 32.87 }, { nome: "Ciência, Tecnol. e Inovação", val: 23.45 }, { nome: "Secretaria da Seg. Pública", val: 20.66 }, { nome: "Tribunal de Justiça (TJSP)", val: 17.65, isTj: true }, { nome: "Transportes Metropolitanos", val: 13.41 }, { nome: "Meio Amb., Infraest. e Logística", val: 10.90 }, { nome: "Parcerias em Investimentos", val: 7.98 }] },
+            '2026': { total: 382.31, orgsCount: 30, orgaos: [{ nome: "Administração Geral do Estado", val: 122.23 }, { nome: "Gestão e Governo Digital", val: 66.64 }, { nome: "Secretaria da Saúde", val: 37.92 }, { nome: "Secretaria da Educação", val: 33.39 }, { nome: "Ciência, Tecnol. e Inovação", val: 24.69 }, { nome: "Secretaria da Seg. Pública", val: 21.45 }, { nome: "Tribunal de Justiça (TJSP)", val: 19.38, isTj: true }, { nome: "Transportes Metropolitanos", val: 12.34 }, { nome: "Parcerias em Investimentos", val: 11.58 }, { nome: "Meio Amb., Infraest. e Logística", val: 8.89 }] }
+        };
+
+        // --- 4. FUNÇÕES DA HOME ---
+        function renderHomeTables() {
+            const tbody = document.getElementById('comparativeTableBody');
+            tbody.innerHTML = '';
+            
+            [...tjData].reverse().forEach(d => {
+                const diff = (d.execTable - d.loa);
+                const isPositive = diff >= 0;
+                const diffClass = isPositive ? 'val-positive' : 'val-negative';
+                const sign = isPositive ? '+' : '';
+                
+                const incPerc = ((diff / d.loa) * 100).toFixed(1);
+                
+                let execDisplay = d.execTable.toFixed(2).replace('.', ',');
+                let yearDisplay = d.ano === '2026' ? '2026*' : d.ano;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${yearDisplay}</td>
+                    <td>${d.loa.toFixed(2).replace('.', ',')}</td>
+                    <td>${execDisplay}</td>
+                    <td class="${diffClass}">${sign}${diff.toFixed(2).replace('.', ',')}</td>
+                    <td class="${diffClass}">${sign}${incPerc.replace('.', ',')}%</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            renderRankingTable();
+        }
+
+        function renderRankingTable() {
+            const year = document.getElementById('yearSelector').value;
+            const data = rankingEstado[year];
+            const tbody = document.getElementById('rankingTableBody');
+            tbody.innerHTML = '';
+
+            data.orgaos.forEach((org, index) => {
+                const perc = ((org.val / data.total) * 100).toFixed(1);
+                const style = org.isTj ? 'background-color: #ffeaa7; font-weight: bold;' : '';
+                const star = org.isTj ? '⭐ ' : '';
+                
+                const tr = document.createElement('tr');
+                tr.style = style;
+                tr.innerHTML = `
+                    <td>${index + 1}º</td>
+                    <td style="text-align: left;">${star}${org.nome}</td>
+                    <td>${org.val.toFixed(2).replace('.', ',')}</td>
+                    <td>${perc}%</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('rankingTotal').innerHTML = `Orçamento Total do Estado em ${year}: <span style="color: var(--primary);">R$ ${data.total.toFixed(2).replace('.', ',')} Bilhões</span> <br><span style="font-size: 13px; font-weight: 500; color: #555;">(Total de ${data.orgsCount} órgãos orçamentários)</span>`;
+        }
+
+        // --- 5. LÓGICA GRÁFICA ---
+        const getTickColor = (ctx) => {
+            if (ctx.tick && ctx.tick.label) {
+                const lbl = ctx.tick.label;
+                if (Array.isArray(lbl)) {
+                    if (lbl.some(l => l.includes('GREVE'))) return '#d9534f';
+                } else if (typeof lbl === 'string') {
+                    if (lbl.includes('GREVE')) return '#d9534f';
+                }
+            }
+            return '#333';
+        };
+
+        window.setGlobalMode = function(mode) {
+            currentMode = mode;
+            
+            document.getElementById('btnModeLoa').classList.remove('active');
+            document.getElementById('btnModeExec').classList.remove('active');
+            if (mode === 'loa') document.getElementById('btnModeLoa').classList.add('active');
+            if (mode === 'exec') document.getElementById('btnModeExec').classList.add('active');
+
+            const targetRealKey = mode === 'loa' ? 'real_loa' : 'real_exec';
+            
+            const dataRankOrc = [...baseData].sort((a, b) => b[targetRealKey] - a[targetRealKey]);
+            const dataRankSaldo = [...baseData].sort((a, b) => {
+                if (b.saldo !== a.saldo) return b.saldo - a.saldo;
+                return b.inf - a.inf;
+            });
+
+            mapRankOrc = {}; dataRankOrc.forEach((d, i) => mapRankOrc[d.ano] = (i+1)+'ª');
+            mapRankSaldo = {}; dataRankSaldo.forEach((d, i) => mapRankSaldo[d.ano] = (i+1)+'ª');
+
+            if (currentAction) {
+                document.querySelector(`[data-action="${currentAction}"]`).click();
+            }
+        };
+
+        let chartTopInstance = null;
+        let chartBottomInstance = null;
+        const ctxTop = document.getElementById('topCanvas').getContext('2d');
+        const ctxBottom = document.getElementById('bottomCanvas').getContext('2d');
+
+        function createBudgetConfig(dataset, typeBase, mode = '') {
+            const dataKey = `${typeBase}_${currentMode}`; 
+
+            const labels = dataset.map(d => {
+                let lbl = [...d.labelBase];
+                if (mode.includes('rank')) lbl.push(mapRankOrc[d.ano]);
+                return lbl;
+            });
+            const dataVals = dataset.map(d => d[dataKey]);
+            
+            const bgColor = dataset.map((d, i) => {
+                if (mode.includes('rank')) {
+                    if (i === 0) return '#2ca02c'; 
+                    if (i === dataset.length - 1) return '#d9534f'; 
+                    return '#4a81ba'; 
+                }
+                return typeBase === 'nominal' ? '#8da9c4' : '#d9534f'; 
+            });
+
+            const tooltipTitleCb = (ctx) => {
+                let title = Array.isArray(ctx[0].label) ? ctx[0].label[0] : ctx[0].label;
+                if(currentMode === 'exec' && title === '2026') return title + " (Projeção via LOA)";
+                return title;
+            };
+
+            return {
+                type: 'bar',
+                data: { labels: labels, datasets: [{ 
+                    data: dataVals, 
+                    backgroundColor: bgColor, 
+                    borderColor: bgColor, 
+                    borderWidth: 1, 
+                    borderRadius: 4 
+                }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)', padding: 12, titleFont: {size: 14}, bodyFont: {size: 16, weight: 'bold'},
+                            callbacks: {
+                                title: tooltipTitleCb,
+                                label: (ctx) => ' R$ ' + ctx.parsed.y.toFixed(2).replace('.', ',') + ' Bilhões'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, min: 0, suggestedMax: 24, 
+                            title: {display: true, text: 'Bilhões (R$)', font: {weight: 'bold'}}, 
+                            ticks: {callback: v => 'R$ ' + v} 
+                        },
+                        x: { 
+                            ticks: { font: {weight: 'bold'}, color: getTickColor } 
+                        }
+                    },
+                    animation: { duration: 800, easing: 'easeOutQuart' }
+                }
+            };
+        }
+
+        // Trazendo as colunas verticais com a configuração grouped: false e controle de ordem de camadas Z-Index
+        function createSalarialConfig(dataset, mode = '') {
+            const labels = dataset.map(d => {
+                let lbl = [...d.labelBase];
+                if (mode.includes('rank')) lbl.push(mapRankSaldo[d.ano]);
+                return lbl;
+            });
+            
+            return {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { 
+                            label: 'Inflação', 
+                            data: dataset.map(d=>d.inf), 
+                            backgroundColor: 'rgba(243, 156, 18, 0.2)', 
+                            borderColor: '#e67e22', 
+                            borderWidth: 2, 
+                            grouped: false, 
+                            order: 2, 
+                            categoryPercentage: 0.8, 
+                            barPercentage: 0.9, 
+                            borderRadius: 3 
+                        },
+                        { 
+                            label: 'Reposição', 
+                            data: dataset.map(d=>d.rep), 
+                            backgroundColor: 'rgba(41, 128, 255, 1)', 
+                            borderColor: '#2471a3', 
+                            borderWidth: 1, 
+                            grouped: false, 
+                            order: 1, 
+                            categoryPercentage: 0.8, 
+                            barPercentage: 0.45, 
+                            borderRadius: 3 
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { display: true, position: 'top' },
+                        tooltip: {
+                            backgroundColor: 'rgba(255,255,255,0.95)', titleColor: '#333', bodyColor: '#333', borderColor: '#ccc', borderWidth: 1, padding: 12, titleFont: {size: 14}, bodyFont: {size: 14, weight: 'bold'},
+                            callbacks: {
+                                title: (ctx) => Array.isArray(ctx[0].label) ? ctx[0].label[0] : ctx[0].label,
+                                label: (ctx) => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(2) + '%',
+                                afterBody: (ctx) => {
+                                    let inf=0, rep=0;
+                                    ctx.forEach(i => { 
+                                        let val = i.parsed.y;
+                                        if(i.datasetIndex === 0) inf = val; else rep = val; 
+                                    });
+                                    let saldo = (rep - inf).toFixed(2);
+                                    return '\nSaldo: ' + (saldo > 0 ? '+' : '') + saldo + '%';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, min: 0, suggestedMax: 12, 
+                            title: {display: true, text: 'Índice (%)', font: {weight: 'bold'}}, 
+                            ticks: {callback: v => v + '%'} 
+                        },
+                        x: { 
+                            ticks: { font: {weight: 'bold'}, color: getTickColor } 
+                        }
+                    },
+                    animation: { duration: 800, easing: 'easeOutQuart' }
+                }
+            };
+        }
+
+        function createServidoresConfig(dataset) {
+            return {
+                type: 'line',
+                data: {
+                    labels: dataset.map(d => d.labelBase),
+                    datasets: [{ label: 'Nº de Servidores Ativos', data: dataset.map(d=>d.serv), borderColor: '#00a884', backgroundColor: 'rgba(0, 168, 132, 0.15)', borderWidth: 3, fill: true, tension: 0.35, pointRadius: 5, pointHoverRadius: 8, pointBackgroundColor: '#00a884' }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { backgroundColor: 'rgba(0, 168, 132, 0.95)', titleColor: '#fff', bodyColor: '#fff', padding: 12, titleFont: {size: 14}, bodyFont: {size: 15, weight: 'bold'}, callbacks: { label: (ctx) => ' Servidores Ativos: ' + ctx.parsed.y.toLocaleString('pt-BR') } }
+                    },
+                    scales: {
+                        y: { beginAtZero: false, min: 35000, max: 44000, ticks: { stepSize: 1000, callback: v => v.toLocaleString('pt-BR') }, title: {display: true, text: 'Nº de Servidores', font: {weight: 'bold'}} },
+                        x: { ticks: { font: {weight: 'bold'}, color: getTickColor } }
+                    }
+                }
+            };
+        }
+
+        function createBubbleConfig(dataset) {
+            const dataKey = `real_${currentMode}`; 
+            
+            const bubbleData = dataset.map(d => {
+                const r = Math.abs(d.saldo) * 4 + 4; 
+                return { x: d[dataKey], y: d.serv, r: r, ano: d.ano, saldo: d.saldo };
+            });
+
+            const bgColors = bubbleData.map(d => d.saldo > 0 ? 'rgba(46, 204, 113, 0.7)' : (d.saldo === 0 ? 'rgba(149, 165, 166, 0.7)' : 'rgba(231, 76, 60, 0.7)'));
+            const borderColors = bubbleData.map(d => d.saldo > 0 ? '#27ae60' : (d.saldo === 0 ? '#7f8c8d' : '#c0392b'));
+
+            return {
+                type: 'bubble',
+                data: { datasets: [{ label: 'Raio-X Anual', data: bubbleData, backgroundColor: bgColors, borderColor: borderColors, borderWidth: 2, hoverRadius: 5 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(44, 62, 80, 0.95)', titleColor: '#fff', bodyColor: '#fff', padding: 15, titleFont: {size: 16}, bodyFont: {size: 14},
+                            callbacks: {
+                                title: (ctx) => {
+                                    let title = 'Ano Referência: ' + ctx[0].raw.ano;
+                                    if(ctx[0].raw.ano === '2025') title += " (GREVE)";
+                                    if(currentMode === 'exec' && ctx[0].raw.ano === '2026') return title + " (Projeção)";
+                                    return title;
+                                },
+                                label: (ctx) => {
+                                    const d = ctx.raw;
+                                    return [
+                                        `Orçamento Real: R$ ${d.x.toFixed(2).replace('.',',')} Bi`,
+                                        `Servidores Ativos: ${d.y.toLocaleString('pt-BR')}`,
+                                        `Saldo Salarial: ${d.saldo > 0 ? '+' : ''}${d.saldo}%`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: '➔ Orçamento Real Corrigido (R$ Bilhões)', font: {weight: 'bold', size: 14} }, min: 16, max: 24, ticks: { callback: v => 'R$ ' + v + ' Bi' } },
+                        y: { title: { display: true, text: '➔ Quadro de Servidores Ativos (Nº)', font: {weight: 'bold', size: 14} }, min: 37000, max: 44000, ticks: { stepSize: 1000, callback: v => v.toLocaleString('pt-BR') } }
+                    },
+                    animation: { duration: 1200, easing: 'easeOutBounce' }
+                }
+            };
+        }
+
+        function renderCharts(topConfig, topTitle, topColor, bottomConfig = null, bottomTitle = null, bottomColor = null, isSingleLarge = false) {
+            document.getElementById('homeView').classList.add('hidden');
+            document.getElementById('topChartBox').classList.remove('hidden');
+
+            const lblMode = currentMode === 'loa' ? '(Dotação LOA)' : '(Despesa Executada)';
+            const tTitle = `${topTitle} ${lblMode}`;
+
+            const topBox = document.getElementById('topChartBox');
+            if (isSingleLarge) topBox.classList.add('large'); else topBox.classList.remove('large');
+
+            const topTitleEl = document.getElementById('topChartTitle');
+            topTitleEl.textContent = tTitle;
+            topTitleEl.style.color = `var(--${topColor})`;
+            
+            if (chartTopInstance) {
+                chartTopInstance.config.type = topConfig.type;
+                chartTopInstance.data = topConfig.data;
+                chartTopInstance.options = topConfig.options;
+                chartTopInstance.update();
+            } else {
+                chartTopInstance = new Chart(ctxTop, topConfig);
+            }
+
+            const bottomBox = document.getElementById('bottomChartBox');
+            if (bottomConfig) {
+                bottomBox.classList.remove('hidden');
+                document.getElementById('bottomChartTitle').textContent = bottomTitle;
+                document.getElementById('bottomChartTitle').style.color = `var(--${bottomColor})`;
+                
+                if (chartBottomInstance) {
+                    chartBottomInstance.config.type = bottomConfig.type;
+                    chartBottomInstance.data = bottomConfig.data;
+                    chartBottomInstance.options = bottomConfig.options;
+                    chartBottomInstance.update();
+                } else {
+                    chartBottomInstance = new Chart(ctxBottom, bottomConfig);
+                }
+            } else {
+                bottomBox.classList.add('hidden');
+            }
+        }
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                const targetTab = e.target.getAttribute('data-tab');
+                document.querySelectorAll('.sub-menu').forEach(sm => sm.classList.add('hidden'));
+                
+                if (targetTab === 'menu0') {
+                    currentAction = null;
+                    document.getElementById('homeView').classList.remove('hidden');
+                    document.getElementById('topChartBox').classList.add('hidden');
+                    document.getElementById('bottomChartBox').classList.add('hidden');
+                    document.getElementById('globalToggleWrapper').classList.add('invisible');
+                } else {
+                    document.getElementById('globalToggleWrapper').classList.remove('invisible');
+                    
+                    if (targetTab === 'menu1') {
+                        document.getElementById('subMenu1').classList.remove('hidden');
+                        document.querySelector('[data-action="m1_nominal"]').click(); 
+                    } else if (targetTab === 'menu2') {
+                        document.getElementById('subMenu2').classList.remove('hidden');
+                        document.querySelector('[data-action="m2_crono"]').click();
+                    } else if (targetTab === 'menu3') {
+                        document.getElementById('subMenu3').classList.remove('hidden');
+                        document.querySelector('[data-action="m3_orc"]').click();
+                    } else if (targetTab === 'menu4') {
+                        document.getElementById('subMenu4').classList.remove('hidden');
+                        document.querySelector('[data-action="m4_bubble"]').click();
+                    }
+                }
+            });
+        });
+
+        document.querySelectorAll('.sub-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.target.parentElement.querySelectorAll('.sub-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                const action = e.target.getAttribute('data-action');
+                currentAction = action; 
+
+                const targetRealKey = currentMode === 'loa' ? 'real_loa' : 'real_exec';
+                const dataRankOrc = [...baseData].sort((a, b) => b[targetRealKey] - a[targetRealKey]);
+                const dataRankSaldo = [...baseData].sort((a, b) => {
+                    if (b.saldo !== a.saldo) return b.saldo - a.saldo;
+                    return b.inf - a.inf;
+                });
+
+                switch(action) {
+                    case 'm1_nominal':
+                        renderCharts(createBudgetConfig(dataCrono, 'nominal', 'crono'), 'Orçamento TJSP: Nominais', 'primary');
+                        break;
+                    case 'm1_real':
+                        renderCharts(createBudgetConfig(dataCrono, 'real', 'crono'), 'Orçamento TJSP: Reais Corrigidos', 'accent-red');
+                        break;
+                    case 'm2_crono':
+                        renderCharts(
+                            createBudgetConfig(dataCrono, 'real', 'crono'), 'Orçamento Real: Cronológica', 'accent-red',
+                            createSalarialConfig(dataCrono, 'crono'), 'Política Salarial: Inflação vs Reposição', 'primary'
+                        );
+                        break;
+                    case 'm2_rank_orc':
+                        renderCharts(
+                            createBudgetConfig(dataRankOrc, 'real', 'rank_orc'), 'Ranking: Orçamento Real (Maior ao Menor)', 'primary',
+                            createSalarialConfig(dataRankOrc, 'rank_orc'), 'Política Salarial Acompanhando o Orçamento', 'text-dark'
+                        );
+                        break;
+                    case 'm2_rank_saldo':
+                        renderCharts(
+                            createSalarialConfig(dataRankSaldo, 'rank_saldo'), 'Ranking: Saldo Salarial (Maior Ganho ao Arrocho)', 'accent-purple',
+                            createBudgetConfig(dataRankSaldo, 'real', 'rank_saldo'), 'Orçamento Real Acompanhando o Saldo Salarial', 'text-dark'
+                        );
+                        break;
+                    case 'm3_orc':
+                        renderCharts(
+                            createBudgetConfig(dataCrono, 'real', 'crono'), 'Orçamento Real (Ordem Cronológica)', 'accent-red',
+                            createServidoresConfig(dataCrono), 'Evolução do Efetivo TJSP', 'accent-green'
+                        );
+                        break;
+                    case 'm3_saldo':
+                        renderCharts(
+                            createSalarialConfig(dataCrono, 'crono'), 'Política Salarial (Ordem Cronológica)', 'primary',
+                            createServidoresConfig(dataCrono), 'Evolução do Efetivo TJSP', 'accent-green'
+                        );
+                        break;
+                    case 'm4_bubble':
+                        renderCharts(
+                            createBubbleConfig(dataCrono), 'Raio-X 3D: Orçamento vs Servidores vs Salário', 'text-dark',
+                            null, null, null, true
+                        );
+                        break;
+                }
+            });
+        });
+
+        setGlobalMode('loa'); 
+        renderHomeTables();
+        document.getElementById('globalToggleWrapper').classList.add('invisible');
+
+    </script>
+</body>
+</html>
